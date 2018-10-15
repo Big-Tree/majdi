@@ -73,6 +73,8 @@ class LoadDataSet():
         tmp = self.test['data'].shape
         self.test['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
 
+        # Normalise between -1 and 1
+
 
     def get_batch_train(self):
         self.batch_number += 1
@@ -98,24 +100,38 @@ class Net(nn.Module):
         super(Net, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(1, 32, 2)
-        self.conv2 = nn.Conv2d(32, 64, 4)
-        self.conv3 = nn.Conv2d(64, 96, 2)
-        self.conv4 = nn.Conv2d(96, 128, 2)
-        self.conv5 = nn.Conv2d(128, 256, 3)
+        self.conv1 = nn.Conv2d(1, 32, 2, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, 4, padding=1)
+        self.conv3 = nn.Conv2d(64, 96, 2, padding=1)
+        self.conv4 = nn.Conv2d(96, 128, 2, padding=1)
+        self.conv5 = nn.Conv2d(128, 256, 3, padding=1)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(256 * 6 * 6, 2)
+        self.fc1 = nn.Linear(256 * 15 * 15, 2)
 
     def forward(self, x):
-        x = F.max_pool2d(F.relu(self.conv1(x)), kernel_size=2, padding=1)
+        print('forward, x.type: ', x.type())
+        print('0: ', x.shape)
+        x = self.conv1(x)
+        print('1: ', x.shape)
+        x = F.relu(x)
+        print('2: ', x.shape)
+        x = F.max_pool2d(x, kernel_size=2, padding=1)
+        print('3: ', x.shape)
+        #x = F.max_pool2d(F.relu(self.conv1(x)), kernel_size=2, padding=1)
         x = F.max_pool2d(F.relu(self.conv2(x)), kernel_size=2, padding=1)
+        print('4: ', x.shape)
         x = F.max_pool2d(F.relu(self.conv3(x)), kernel_size=2, padding=1)
         x = F.max_pool2d(F.relu(self.conv4(x)), kernel_size=2, padding=1)
+        print('5: ', x.shape)
         x = F.max_pool2d(F.relu(self.conv5(x)), kernel_size=2, padding=1)
 
+        print('6: ', x.shape)
         x = x.view(-1, self.num_flat_features(x))
+        print('7: ', x.shape)
         x = self.fc1(x)
+        print('8: ', x.shape)
         x = F.softmax(x, dim=0) # Should it be put through a relu? Is it dim 0?
+        print('9: ', x.shape)
         return x
 
     # Gets the number of features in the layer (calculates the shape of a
@@ -128,7 +144,7 @@ class Net(nn.Module):
         return num_features
 start_time = time.time()
 # Globals:
-BATCH_SIZE = 100
+BATCH_SIZE = 1
 STEPS = 20
 
 dataset = LoadDataSet(0.9, BATCH_SIZE)
@@ -138,22 +154,10 @@ print('dataset.train[labels].shape: ', dataset.train['labels'].shape)
 print('dataset.test[labels].shape: ', dataset.test['labels'].shape)
 net = Net()
 input = torch.randn(1, 1, 210, 210)
+input = torch.randn(1, 1, 211, 211)
+input = torch.randn(1, 1, 429, 429)
 output = net(input)
-print('output: ', output[0])
-target = torch.randn(2)  # a dummy target, for example
-target = target.view(1, -1)  # make it the same shape as output
-criterion = nn.MSELoss()
 
-loss = criterion(output, target)
-
-net.zero_grad()
-#print('conv1.bias.grad before backward')
-#print(net.conv1.bias.grad)
-
-loss.backward()
-# The gradients have now been calculated
-#print('conv1.bias.grad after backward')
-#print(net.conv1.bias.grad)
 
 # Use the gradients to update the weights
 optimizer = optim.SGD(net.parameters(), lr=0.01)
