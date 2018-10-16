@@ -88,8 +88,11 @@ class LoadDataSet():
 
     def get_batch_train(self):
         self.batch_number += 1
-        out = self.train['data'][(self.batch_number-1)*self.batch_size :
-            self.batch_number*self.batch_size]
+        indices = range(
+            (self.batch_number-1)*self.batch_size,
+            self.batch_number*self.batch_size)
+        print('indices: ', indices)
+        out = self.train['data'].take(indices, mode='wrap', axis=0)
         #out = out.astype(np.float64)
         print('out.shape: ', out.shape)
         print('out.dtype: ', out.dtype)
@@ -98,8 +101,10 @@ class LoadDataSet():
         print('out.shape_post: ', out.shape)
         return out
     def get_labels_train(self):
-        out = self.train['labels'][(self.batch_number-1)*self.batch_size :
-            self.batch_number*self.batch_size]
+        indices = range(
+            (self.batch_number-1)*self.batch_size,
+            self.batch_number*self.batch_size)
+        out = self.train['labels'].take(indices, mode='wrap', axis=0)
         out = torch.from_numpy(out).float()
         out = out.to(device)
         print('out.dtype: ', out.dtype)
@@ -161,7 +166,7 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 20
+STEPS = 200
 DEVICE = torch.device('cuda:0')
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
@@ -178,13 +183,15 @@ output = net(input)
 
 
 # Use the gradients to update the weights
-optimizer = optim.SGD(net.parameters(), lr=0.01)
+#optimizer = optim.SGD(net.parameters(), lr=0.01)
+optimizer = optim.Adam(net.parameters())
 
 # Print the parameters before and after
 # Before:
 #print('Network params before')
 #print(list(net.parameters()))
 criterion = nn.MSELoss()
+losses = []
 for i in range(STEPS):
     batch = dataset.get_batch_train()
 #    batch = batch.float()
@@ -195,9 +202,11 @@ for i in range(STEPS):
     labels = dataset.get_labels_train()
 #    labels = labels.float()
     loss = criterion(output, labels)
+    losses.append(loss.data[0])
     loss.backward()
     optimizer.step()
 
+print('Losses:\n', losses)
 
 
 
