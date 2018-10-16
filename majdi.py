@@ -74,24 +74,34 @@ class LoadDataSet():
         self.test['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
 
         # Normalise between -1 and 1
+        # Get max value
+        max_pixel = np.amax([np.amax(self.train['data']),
+                             np.amax(self.test['data'])])
+        print('Max pixel: ', max_pixel)
+        self.train['data'] = self.train['data']/max_pixel*2 - 1
+        self.test['data'] = self.test['data']/max_pixel*2 - 1
+        print('min self.train: ', np.amin(self.train['data']))
+        print('max self.train: ', np.amax(self.train['data']))
+        print('min self.test: ', np.amin(self.test['data']))
+        print('max self.test: ', np.amax(self.test['data']))
 
 
     def get_batch_train(self):
         self.batch_number += 1
         out = self.train['data'][(self.batch_number-1)*self.batch_size :
             self.batch_number*self.batch_size]
-        out = out.astype(np.float64)
+        #out = out.astype(np.float64)
         print('out.shape: ', out.shape)
         print('out.dtype: ', out.dtype)
-        out = torch.from_numpy(out)
+        out = torch.from_numpy(out).float()
         print('out.shape_post: ', out.shape)
         return out
     def get_labels_train(self):
         out = self.train['labels'][(self.batch_number-1)*self.batch_size :
             self.batch_number*self.batch_size]
-        out = out.astype(np.float64)
+        #out = out.astype(np.float64)
         print('out.dtype: ', out.dtype)
-        return torch.from_numpy(out)
+        return torch.from_numpy(out).float()
 
 
 # Reproducing Majdi's work with his network architecture
@@ -166,25 +176,22 @@ optimizer = optim.SGD(net.parameters(), lr=0.01)
 # Before:
 #print('Network params before')
 #print(list(net.parameters()))
-
+criterion = nn.MSELoss()
 for i in range(STEPS):
     batch = dataset.get_batch_train()
+#    batch = batch.float()
     optimizer.zero_grad()
     print('batch.shape: ', batch.shape)
     print('batch.type(): ', batch.type())
     output = net(batch)
-    loss = criterion(output, dataset.get_labels_train())
+    labels = dataset.get_labels_train()
+#    labels = labels.float()
+    loss = criterion(output, labels)
     loss.backward()
     optimizer.step()
 
 
 
-for i in range(1):
-    optimizer.zero_grad() # Zero the gradient buffers. Why?
-    output = net(input)
-    loss = criterion(output, target)
-    loss.backward()
-    optimizer.step()
 
 # After:
 #print(list(net.parameters()))
