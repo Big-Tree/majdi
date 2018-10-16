@@ -13,7 +13,7 @@ import usefulFunctions as uf
 
 # Class to read the dicom images in for training and testing of the network
 class LoadDataSet():
-    def __init__(self, split_ratio, batch_size):
+    def __init__(self, split_ratio, batch_size, device):
         # Initialise class variables:
         self.batch_number = 0 # Keeps track of the minibatches during training
         self.batch_size = batch_size
@@ -94,14 +94,16 @@ class LoadDataSet():
         print('out.shape: ', out.shape)
         print('out.dtype: ', out.dtype)
         out = torch.from_numpy(out).float()
+        out = out.to(device)
         print('out.shape_post: ', out.shape)
         return out
     def get_labels_train(self):
         out = self.train['labels'][(self.batch_number-1)*self.batch_size :
             self.batch_number*self.batch_size]
-        #out = out.astype(np.float64)
+        out = torch.from_numpy(out).float()
+        out = out.to(device)
         print('out.dtype: ', out.dtype)
-        return torch.from_numpy(out).float()
+        return out
 
 
 # Reproducing Majdi's work with his network architecture
@@ -153,19 +155,25 @@ class Net(nn.Module):
             num_features *= s
         return num_features
 start_time = time.time()
+# Pre-sets
+dtype = torch.float # not sure what this does
+device = torch.device('cpu')
+device = torch.device('cuda:0') # Run on GPU
 # Globals:
-BATCH_SIZE = 1
+BATCH_SIZE = 25
 STEPS = 20
+DEVICE = torch.device('cuda:0')
 
-dataset = LoadDataSet(0.9, BATCH_SIZE)
+dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
 print('dataset.train[data].shape: ', dataset.train['data'].shape)
 print('dataset.test[data].shape: ', dataset.test['data'].shape)
 print('dataset.train[labels].shape: ', dataset.train['labels'].shape)
 print('dataset.test[labels].shape: ', dataset.test['labels'].shape)
 net = Net()
-input = torch.randn(1, 1, 210, 210)
-input = torch.randn(1, 1, 211, 211)
-input = torch.randn(1, 1, 429, 429)
+net = net.to(DEVICE) # Enable GPU
+input = torch.randn(1, 1, 210, 210, device = DEVICE)
+input = torch.randn(1, 1, 211, 211, device = DEVICE)
+input = torch.randn(1, 1, 429, 429, device = DEVICE)
 output = net(input)
 
 
