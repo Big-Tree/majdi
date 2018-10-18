@@ -6,6 +6,7 @@ import random
 import pydicom
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 sys.path.append('/vol/research/mammo2/will/python/usefulFunctions')
 import usefulFunctions as uf
@@ -41,7 +42,7 @@ class LoadDataSet():
             for img in dicom_images[key]:
                 rgb_images[key].append(img.pixel_array)
 
-        # Split the data into training and test
+        # Split the data into training and val
         # Mix the lesions and backgrounds
         # [[img, label], [img, label]]
         dataset_mixer = []
@@ -55,7 +56,7 @@ class LoadDataSet():
         self.train = {
             'data': np.asarray([_['image'] for _ in dataset_mixer][0 : s_p]),
             'labels': np.asarray([_['class'] for _ in dataset_mixer][0 : s_p])}
-        self.test = {
+        self.val = {
             'data': np.asarray([_['image'] for _ in dataset_mixer][s_p : ]),
             'labels': np.asarray([_['class'] for _ in dataset_mixer][s_p : ])}
         # Convert to one hot labels
@@ -63,58 +64,78 @@ class LoadDataSet():
         self.train['labels'] = np.zeros((len(tmp_labels), 2))
         self.train['labels'][range(len(tmp_labels)), tmp_labels] = 1
 
-        tmp_labels = self.test['labels']
-        self.test['labels'] = np.zeros((len(tmp_labels), 2))
-        self.test['labels'][range(len(tmp_labels)), tmp_labels] = 1
+        tmp_labels = self.val['labels']
+        self.val['labels'] = np.zeros((len(tmp_labels), 2))
+        self.val['labels'][range(len(tmp_labels)), tmp_labels] = 1
 
         # Reshape the images
         tmp = self.train['data'].shape
         self.train['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
-        tmp = self.test['data'].shape
-        self.test['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
+        tmp = self.val['data'].shape
+        self.val['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
 
         # Normalise between -1 and 1
         # Get max value
         max_pixel = np.amax([np.amax(self.train['data']),
-                             np.amax(self.test['data'])])
+                             np.amax(self.val['data'])])
         print('Max pixel: ', max_pixel)
         self.train['data'] = self.train['data']/max_pixel*2 - 1
-        self.test['data'] = self.test['data']/max_pixel*2 - 1
+        self.val['data'] = self.val['data']/max_pixel*2 - 1
         print('min self.train: ', np.amin(self.train['data']))
         print('max self.train: ', np.amax(self.train['data']))
-        print('min self.test: ', np.amin(self.test['data']))
-        print('max self.test: ', np.amax(self.test['data']))
+        print('min self.val: ', np.amin(self.val['data']))
+        print('max self.val: ', np.amax(self.val['data']))
 
 
-    def get_batch_train(self):
+    def get_batch_train(self, verbose = False):
         self.batch_number += 1
         indices = range(
             (self.batch_number-1)*self.batch_size,
             self.batch_number*self.batch_size)
-        print('indices: ', indices)
+        if verbose == True: print('indices: ', indices)
         out = self.train['data'].take(indices, mode='wrap', axis=0)
         #out = out.astype(np.float64)
-        print('out.shape: ', out.shape)
-        print('out.dtype: ', out.dtype)
+        if verbose == True: print('out.shape: ', out.shape)
+        if verbose == True: print('out.dtype: ', out.dtype)
         out = torch.from_numpy(out).float()
         out = out.to(device)
-        print('out.shape_post: ', out.shape)
+        if verbose == True: print('out.shape_post: ', out.shape)
         return out
-    def get_labels_train(self):
+    def get_labels_train(self, verbose = False):
         indices = range(
             (self.batch_number-1)*self.batch_size,
             self.batch_number*self.batch_size)
         out = self.train['labels'].take(indices, mode='wrap', axis=0)
         out = torch.from_numpy(out).float()
         out = out.to(device)
-        print('out.dtype: ', out.dtype)
+        if verbose == True: print('out.dtype: ', out.dtype)
         return out
+    def get_batch_val(self):
+        indices = range(
+            (self.batch_number-1)*self.batch_size,
+            self.batch_number*self.batch_size)
+        out = self.val['data'].take(indices, mode='wrap', axis=0)
+        #out = out.astype(np.float64)
+        out = torch.from_numpy(out).float()
+        out = out.to(device)
+        return out
+    def get_labels_val(self):
+        indices = range(
+            (self.batch_number-1)*self.batch_size,
+            self.batch_number*self.batch_size)
+        out = self.val['labels'].take(indices, mode='wrap', axis=0)
+        out = torch.from_numpy(out).float()
+        out = out.to(device)
+        return out
+
+
 
 
 # Reproducing Majdi's work with his network architecture
 class Net(nn.Module):
-    def __init__(self):
+    def __init__(self, verbose=False):
         super(Net, self).__init__()
+        self.verbose = verbose
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
         self.conv1 = nn.Conv2d(1, 32, 2, padding=1)
@@ -126,29 +147,29 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(256 * 15 * 15, 2)
 
     def forward(self, x):
-        print('forward, x.type: ', x.type())
-        print('0: ', x.shape)
+        if self.verbose == True: print('forward, x.type: ', x.type())
+        if self.verbose == True: print('0: ', x.shape)
         x = self.conv1(x)
-        print('1: ', x.shape)
+        if self.verbose == True: print('1: ', x.shape)
         x = F.relu(x)
-        print('2: ', x.shape)
+        if self.verbose == True: print('2: ', x.shape)
         x = F.max_pool2d(x, kernel_size=2, padding=1)
-        print('3: ', x.shape)
+        if self.verbose == True: print('3: ', x.shape)
         #x = F.max_pool2d(F.relu(self.conv1(x)), kernel_size=2, padding=1)
         x = F.max_pool2d(F.relu(self.conv2(x)), kernel_size=2, padding=1)
-        print('4: ', x.shape)
+        if self.verbose == True: print('4: ', x.shape)
         x = F.max_pool2d(F.relu(self.conv3(x)), kernel_size=2, padding=1)
         x = F.max_pool2d(F.relu(self.conv4(x)), kernel_size=2, padding=1)
-        print('5: ', x.shape)
+        if self.verbose == True: print('5: ', x.shape)
         x = F.max_pool2d(F.relu(self.conv5(x)), kernel_size=2, padding=1)
 
-        print('6: ', x.shape)
+        if self.verbose == True: print('6: ', x.shape)
         x = x.view(-1, self.num_flat_features(x))
-        print('7: ', x.shape)
+        if self.verbose == True: print('7: ', x.shape)
         x = self.fc1(x)
-        print('8: ', x.shape)
+        if self.verbose == True: print('8: ', x.shape)
         x = F.softmax(x, dim=0) # Should it be put through a relu? Is it dim 0?
-        print('9: ', x.shape)
+        if self.verbose == True: print('9: ', x.shape)
         return x
 
     # Gets the number of features in the layer (calculates the shape of a
@@ -166,14 +187,14 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 200
+STEPS = 600
 DEVICE = torch.device('cuda:0')
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
 print('dataset.train[data].shape: ', dataset.train['data'].shape)
-print('dataset.test[data].shape: ', dataset.test['data'].shape)
+print('dataset.val[data].shape: ', dataset.val['data'].shape)
 print('dataset.train[labels].shape: ', dataset.train['labels'].shape)
-print('dataset.test[labels].shape: ', dataset.test['labels'].shape)
+print('dataset.val[labels].shape: ', dataset.val['labels'].shape)
 net = Net()
 net = net.to(DEVICE) # Enable GPU
 input = torch.randn(1, 1, 210, 210, device = DEVICE)
@@ -192,21 +213,58 @@ optimizer = optim.Adam(net.parameters())
 #print(list(net.parameters()))
 criterion = nn.MSELoss()
 losses = []
+accuracies = []
+val_accuracies = []
 for i in range(STEPS):
     batch = dataset.get_batch_train()
 #    batch = batch.float()
     optimizer.zero_grad()
-    print('batch.shape: ', batch.shape)
-    print('batch.type(): ', batch.type())
+    #print('batch.shape: ', batch.shape)
+    #print('batch.type(): ', batch.type())
+    print('Step (', i, '/', STEPS, ')')
     output = net(batch)
     labels = dataset.get_labels_train()
-#    labels = labels.float()
+    # Calculate accuracy and track
+    pred = np.zeros((len(labels), 2))
+    maxOutput = [np.argmax(_) for _ in output.data.cpu().numpy()]
+    pred[range(len(pred)), maxOutput] = 1
+    accuracy = sum(pred == labels.cpu().numpy())/len(labels)
+    accuracy = accuracy[0]
+    accuracies.append(accuracy)
+    # Track losses
     loss = criterion(output, labels)
-    losses.append(loss.data[0])
+    losses.append(loss.data[0].cpu().numpy())
+    # Calculate and track validation accuracy
+    val_batch = dataset.get_batch_val()
+    val_labels= dataset.get_labels_val()
+    val_output = net(val_batch)
+    maxOutput = [np.argmax(_) for _ in val_output.data.cpu().numpy()]
+    pred[range(len(pred)), maxOutput] = 1
+    val_accuracy = sum(pred == val_labels.cpu().numpy())/len(val_labels)
+    val_accuracy = val_accuracy[0]
+    val_accuracies.append(val_accuracy)
+
+
+    # Compute gradients and optimise
     loss.backward()
     optimizer.step()
 
-print('Losses:\n', losses)
+
+# Plot loss
+plt.figure()
+plt.title('Loss')
+plt.xlabel('Steps')
+plt.ylabel('Loss')
+plt.plot(range(len(losses)), losses)
+
+# Plot accuracy
+plt.figure()
+plt.title('Accuracy')
+plt.xlabel('Steps')
+plt.ylabel('Accuracy')
+plt.plot(range(len(accuracies)), accuracies, label='train')
+plt.plot(range(len(val_accuracies)), val_accuracies, label='val')
+plt.legend()
 
 
 
@@ -224,3 +282,4 @@ for _ in params:
 #print(net)
 
 print('Running time:', '{:.2f}'.format(time.time() - start_time), ' s')
+plt.show()
