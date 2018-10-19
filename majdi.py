@@ -7,9 +7,11 @@ import pydicom
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 import sys
 sys.path.append('/vol/research/mammo2/will/python/usefulFunctions')
 import usefulFunctions as uf
+from majdiFunctions import *
 
 
 # Class to read the dicom images in for training and testing of the network
@@ -119,11 +121,21 @@ class LoadDataSet():
         out = torch.from_numpy(out).float()
         out = out.to(device)
         return out
+    def get_batch_val_all(self):
+        out = self.val['data']
+        out = torch.from_numpy(out).float()
+        out = out.to(device)
+        return out
     def get_labels_val(self):
         indices = range(
             (self.batch_number-1)*self.batch_size,
             self.batch_number*self.batch_size)
         out = self.val['labels'].take(indices, mode='wrap', axis=0)
+        out = torch.from_numpy(out).float()
+        out = out.to(device)
+        return out
+    def get_labels_val_all(self):
+        out = self.val['labels']
         out = torch.from_numpy(out).float()
         out = out.to(device)
         return out
@@ -180,6 +192,8 @@ class Net(nn.Module):
         for s in size:
             num_features *= s
         return num_features
+
+
 start_time = time.time()
 # Pre-sets
 dtype = torch.float # not sure what this does
@@ -187,7 +201,7 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 600
+STEPS = 500
 DEVICE = torch.device('cuda:0')
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
@@ -227,7 +241,7 @@ for i in range(STEPS):
     # Calculate accuracy and track
     pred = np.zeros((len(labels), 2))
     maxOutput = [np.argmax(_) for _ in output.data.cpu().numpy()]
-    pred[range(len(pred)), maxOutput] = 1
+    pred[range(BATCH_SIZE), maxOutput] = 1
     accuracy = sum(pred == labels.cpu().numpy())/len(labels)
     accuracy = accuracy[0]
     accuracies.append(accuracy)
@@ -235,14 +249,25 @@ for i in range(STEPS):
     loss = criterion(output, labels)
     losses.append(loss.data[0].cpu().numpy())
     # Calculate and track validation accuracy
-    val_batch = dataset.get_batch_val()
-    val_labels= dataset.get_labels_val()
-    val_output = net(val_batch)
-    maxOutput = [np.argmax(_) for _ in val_output.data.cpu().numpy()]
-    pred[range(len(pred)), maxOutput] = 1
-    val_accuracy = sum(pred == val_labels.cpu().numpy())/len(val_labels)
-    val_accuracy = val_accuracy[0]
-    val_accuracies.append(val_accuracy)
+
+    # Calculate validation accuracy based on all val images
+    val_accuracies.append(
+        get_accuracy_epoch(
+            net,
+            dataset.get_batch_val_all(),
+            dataset.get_labels_val_all(),
+            20))
+
+
+
+   # val_batch = dataset.get_batch_val()
+   # val_labels= dataset.get_labels_val()
+   # val_output = net(val_batch)
+   # maxOutput = [np.argmax(_) for _ in val_output.data.cpu().numpy()]
+   # pred[range(len(pred)), maxOutput] = 1
+   # val_accuracy = sum(pred == val_labels.cpu().numpy())/len(val_labels)
+   # val_accuracy = val_accuracy[0]
+   # val_accuracies.append(val_accuracy)
 
 
     # Compute gradients and optimise
