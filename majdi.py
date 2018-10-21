@@ -158,6 +158,7 @@ class Net(nn.Module):
     def __init__(self, verbose=False):
         super(Net, self).__init__()
         self.verbose = verbose
+        self.save_softmax = False
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
         self.conv1 = nn.Conv2d(1, 32, 2, padding=1)
@@ -192,6 +193,9 @@ class Net(nn.Module):
         if self.verbose == True: print('8: ', x.shape)
         x = F.softmax(x, dim=1) # Should it be put through a relu? Is it dim 0?
         if self.verbose == True: print('9: ', x.shape)
+        if self.save_softmax == True:
+            self.save_softmax = False
+            self.softmax_out = x
         return x
 
     # Gets the number of features in the layer (calculates the shape of a
@@ -211,7 +215,7 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 50
+STEPS = 5
 DEVICE = torch.device('cuda:0')
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
@@ -325,11 +329,11 @@ plt.figure()
 plt.title('Loss')
 plt.xlabel('Steps')
 plt.ylabel('Loss')
-plt.plot(range(len(train_losses_step)), train_losses_step, label='train')
-plt.plot(range(len(val_losses_step)), val_losses_step, label='val')
-plt.plot(range(len(val_losses_smooth)), val_losses_smooth, label='val_smooth')
+#plt.plot(range(len(train_losses_step)), train_losses_step, label='train')
+#plt.plot(range(len(val_losses_step)), val_losses_step, label='val')
+plt.plot(range(len(val_losses_smooth)), val_losses_smooth, label='validation')
 plt.plot(range(len(train_losses_smooth)), train_losses_smooth,
-         label='train_smooth')
+         label='train')
 plt.grid(True)
 plt.legend()
 
@@ -338,18 +342,24 @@ plt.figure()
 plt.title('Accuracy')
 plt.xlabel('Steps')
 plt.ylabel('Accuracy')
-plt.plot(range(len(train_accuracies_step)), train_accuracies_step, label='train')
-plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val')
-plt.plot(range(len(val_accuracies_smooth)), val_accuracies_smooth, label='val_smooth')
+#plt.plot(range(len(train_accuracies_step)), train_accuracies_step, label='train')
+#plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val')
+plt.plot(range(len(val_accuracies_smooth)), val_accuracies_smooth,
+         label='validation')
 plt.plot(range(len(train_accuracies_smooth)), train_accuracies_smooth,
-         label='train_smooth')
+         label='train')
 plt.grid(True)
 plt.legend()
 
-# After:
-#print(list(net.parameters()))
-
-#print('\n\n\n')
+optimizer.zero_grad()
+fpr, tpr = get_roc_curve(
+    net,
+    dataset.get_batch_val_all(),
+    dataset.get_labels_val_all(),
+    optimizer,
+    10)
+print('fpr:\n', fpr)
+print('tpr:\n', tpr)
 
 
 params = list(net.parameters())
