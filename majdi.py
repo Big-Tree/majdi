@@ -211,7 +211,7 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 300
+STEPS = 50
 DEVICE = torch.device('cuda:0')
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
@@ -247,9 +247,11 @@ val_accuracies_step = []
 val_accuracies_smooth = []
 train_accuracies_smooth = []
 for i in range(STEPS):
+    print('\n\nStep (', i, '/', STEPS, ')')
+
+    forward_time = time.time()
     # Calculate training accuracy and loss on all train images
-    #print('Old loss: ', loss.item())
-    print('TRAIN STATS')
+    print('    TRAIN STATS...')
     tmp_acc, tmp_loss = (
         get_stats_epoch(
             net,
@@ -262,8 +264,7 @@ for i in range(STEPS):
 
 
     # Calculate validation accuracy and loss based on all val images
-    print('VAL STATS')
-    forward_time = time.time()
+    print('    VAL STATS...')
     tmp_acc, tmp_loss = (
         get_stats_epoch(
             net,
@@ -274,15 +275,13 @@ for i in range(STEPS):
     val_accuracies_smooth.append(tmp_acc)
     val_losses_smooth.append(tmp_loss)
 
-
+    forward_time = time.time() - forward_time
+    print('    OPTIMISE...')
     # Calculate loss and accuracy for single step
+    # get data for step
     batch = dataset.get_batch_train()
     batch_val = dataset.get_batch_val()
-#    batch = batch.float()
     optimizer.zero_grad()
-    #print('batch.shape: ', batch.shape)
-    #print('batch.type(): ', batch.type())
-    print('\n\nStep (', i, '/', STEPS, ')')
     output = net(batch)
     labels = dataset.get_labels_train()
     labels_val = dataset.get_labels_val()
@@ -312,14 +311,13 @@ for i in range(STEPS):
     # Calculate and track validation accuracy
 
 
-    forward_time = time.time() - forward_time
 
     # Compute gradients and optimise
     optimise_time = time.time()
     loss.backward()
     optimizer.step()
     optimise_time = time.time() - optimise_time
-    print('\n\n\nforward_time: ', forward_time,'\noptimise_time: ', optimise_time)
+    print('forward_time: ', forward_time,'\noptimise_time: ', optimise_time)
 
 
 # Plot loss
@@ -332,6 +330,7 @@ plt.plot(range(len(val_losses_step)), val_losses_step, label='val')
 plt.plot(range(len(val_losses_smooth)), val_losses_smooth, label='val_smooth')
 plt.plot(range(len(train_losses_smooth)), train_losses_smooth,
          label='train_smooth')
+plt.grid(True)
 plt.legend()
 
 # Plot accuracy
@@ -344,10 +343,8 @@ plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val')
 plt.plot(range(len(val_accuracies_smooth)), val_accuracies_smooth, label='val_smooth')
 plt.plot(range(len(train_accuracies_smooth)), train_accuracies_smooth,
          label='train_smooth')
+plt.grid(True)
 plt.legend()
-
-print('train_losses_step: ',train_losses_step)
-print('val_losses_step: ', val_losses_step)
 
 # After:
 #print(list(net.parameters()))
