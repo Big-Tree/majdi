@@ -103,6 +103,11 @@ class LoadDataSet():
         out = out.to(device)
         if verbose == True: print('out.shape_post: ', out.shape)
         return out
+    def get_batch_train_all(self):
+        out = self.train['data']
+        out = torch.from_numpy(out).float()
+        out = out.to(device)
+        return out
     def get_labels_train(self, verbose = False):
         indices = range(
             (self.batch_number-1)*self.batch_size,
@@ -111,6 +116,11 @@ class LoadDataSet():
         out = torch.from_numpy(out).float()
         out = out.to(device)
         if verbose == True: print('out.dtype: ', out.dtype)
+        return out
+    def get_labels_train_all(self):
+        out = self.train['labels']
+        out = torch.from_numpy(out).float()
+        out = out.to(device)
         return out
     def get_batch_val(self):
         indices = range(
@@ -180,7 +190,7 @@ class Net(nn.Module):
         if self.verbose == True: print('7: ', x.shape)
         x = self.fc1(x)
         if self.verbose == True: print('8: ', x.shape)
-        x = F.softmax(x, dim=0) # Should it be put through a relu? Is it dim 0?
+        x = F.softmax(x, dim=1) # Should it be put through a relu? Is it dim 0?
         if self.verbose == True: print('9: ', x.shape)
         return x
 
@@ -201,7 +211,7 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 200
+STEPS = 300
 DEVICE = torch.device('cuda:0')
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
@@ -209,7 +219,7 @@ print('dataset.train[data].shape: ', dataset.train['data'].shape)
 print('dataset.val[data].shape: ', dataset.val['data'].shape)
 print('dataset.train[labels].shape: ', dataset.train['labels'].shape)
 print('dataset.val[labels].shape: ', dataset.val['labels'].shape)
-net = Net()
+net = Net(verbose=False)
 net = net.to(DEVICE) # Enable GPU
 input = torch.randn(1, 1, 210, 210, device = DEVICE)
 input = torch.randn(1, 1, 211, 211, device = DEVICE)
@@ -226,54 +236,83 @@ optimizer = optim.Adam(net.parameters())
 #print('Network params before')
 #print(list(net.parameters()))
 criterion = nn.MSELoss()
-losses = []
-val_losses = []
-accuracies = []
-val_accuracies = []
+
+train_losses_step = []
+val_losses_step = []
+val_losses_smooth = []
+train_losses_smooth = []
+
+train_accuracies_step = []
+val_accuracies_step = []
+val_accuracies_smooth = []
+train_accuracies_smooth = []
 for i in range(STEPS):
+    # Calculate training accuracy and loss on all train images
+    #print('Old loss: ', loss.item())
+    print('TRAIN STATS')
+    tmp_acc, tmp_loss = (
+        get_stats_epoch(
+            net,
+            criterion,
+            dataset.get_batch_train_all(),
+            dataset.get_labels_train_all(),
+            25))
+    train_accuracies_smooth.append(tmp_acc)
+    train_losses_smooth.append(tmp_loss)
+
+
+    # Calculate validation accuracy and loss based on all val images
+    print('VAL STATS')
+    forward_time = time.time()
+    tmp_acc, tmp_loss = (
+        get_stats_epoch(
+            net,
+            criterion,
+            dataset.get_batch_val_all(),
+            dataset.get_labels_val_all(),
+            25))
+    val_accuracies_smooth.append(tmp_acc)
+    val_losses_smooth.append(tmp_loss)
+
+
+    # Calculate loss and accuracy for single step
     batch = dataset.get_batch_train()
+    batch_val = dataset.get_batch_val()
 #    batch = batch.float()
     optimizer.zero_grad()
     #print('batch.shape: ', batch.shape)
     #print('batch.type(): ', batch.type())
-    print('Step (', i, '/', STEPS, ')')
+    print('\n\nStep (', i, '/', STEPS, ')')
     output = net(batch)
     labels = dataset.get_labels_train()
+    labels_val = dataset.get_labels_val()
     # Calculate accuracy and track
     pred = np.zeros((len(labels), 2))
     maxOutput = [np.argmax(_) for _ in output.data.cpu().numpy()]
     pred[range(BATCH_SIZE), maxOutput] = 1
     accuracy = sum(pred == labels.cpu().numpy())/len(labels)
     accuracy = accuracy[0]
-    accuracies.append(accuracy)
+    train_accuracies_step.append(accuracy)
     # Track losses
     loss = criterion(output, labels)
-    losses.append(loss.item())
+    train_losses_step.append(loss.item())
+
+    # Calculate the validation accuracy and track
+    output = net(batch_val)
+    pred = np.zeros((len(labels_val), 2))
+    maxOutput = [np.argmax(_) for _ in output.data.cpu().numpy()]
+    pred[range(BATCH_SIZE), maxOutput] = 1
+    accuracy = sum(pred == labels_val.cpu().numpy())/len(labels_val)
+    accuracy = accuracy[0]
+    val_accuracies_step.append(accuracy)
+    # Track losses
+    loss_val = criterion(output, labels_val)
+    val_losses_step.append(loss_val.item())
+
     # Calculate and track validation accuracy
 
-    # Calculate validation accuracy based on all val images
-    forward_time = time.time()
-    tmp_acc, tmp_loss = (
-        get_accuracy_epoch(
-            net,
-            criterion,
-            dataset.get_batch_val_all(),
-            dataset.get_labels_val_all(),
-            20))
-    val_accuracies.append(tmp_acc)
-    val_losses.append(tmp_loss)
+
     forward_time = time.time() - forward_time
-
-
-   # val_batch = dataset.get_batch_val()
-   # val_labels= dataset.get_labels_val()
-   # val_output = net(val_batch)
-   # maxOutput = [np.argmax(_) for _ in val_output.data.cpu().numpy()]
-   # pred[range(len(pred)), maxOutput] = 1
-   # val_accuracy = sum(pred == val_labels.cpu().numpy())/len(val_labels)
-   # val_accuracy = val_accuracy[0]
-   # val_accuracies.append(val_accuracy)
-
 
     # Compute gradients and optimise
     optimise_time = time.time()
@@ -288,8 +327,11 @@ plt.figure()
 plt.title('Loss')
 plt.xlabel('Steps')
 plt.ylabel('Loss')
-plt.plot(range(len(losses)), losses, label='train')
-plt.plot(range(len(val_losses)), val_losses, label='val')
+plt.plot(range(len(train_losses_step)), train_losses_step, label='train')
+plt.plot(range(len(val_losses_step)), val_losses_step, label='val')
+plt.plot(range(len(val_losses_smooth)), val_losses_smooth, label='val_smooth')
+plt.plot(range(len(train_losses_smooth)), train_losses_smooth,
+         label='train_smooth')
 plt.legend()
 
 # Plot accuracy
@@ -297,11 +339,15 @@ plt.figure()
 plt.title('Accuracy')
 plt.xlabel('Steps')
 plt.ylabel('Accuracy')
-plt.plot(range(len(accuracies)), accuracies, label='train')
-plt.plot(range(len(val_accuracies)), val_accuracies, label='val')
+plt.plot(range(len(train_accuracies_step)), train_accuracies_step, label='train')
+plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val')
+plt.plot(range(len(val_accuracies_smooth)), val_accuracies_smooth, label='val_smooth')
+plt.plot(range(len(train_accuracies_smooth)), train_accuracies_smooth,
+         label='train_smooth')
 plt.legend()
 
-
+print('train_losses_step: ',train_losses_step)
+print('val_losses_step: ', val_losses_step)
 
 # After:
 #print(list(net.parameters()))
