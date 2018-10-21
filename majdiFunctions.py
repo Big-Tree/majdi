@@ -4,10 +4,11 @@ import numpy as np
 # This function will return the average accuracy for the entire data that it is
 # sent.  Can calculate accuracy for entire epoch.  Set batch size so that it
 # can all fit in the GPU
-def get_accuracy_epoch(net, data_all, labels_all, batch_size):
+def get_accuracy_epoch(net, criterion,  data_all, labels_all, batch_size):
     print('    length data: ', len(data_all))
     iterations = math.ceil(len(data_all)/batch_size)
     all_accuracies = []
+    all_losses = []
     size_of_final_accuracy = 0
     for i in range(iterations):
         output = net(data_all[i*batch_size : (i+1)*batch_size])
@@ -23,26 +24,22 @@ def get_accuracy_epoch(net, data_all, labels_all, batch_size):
         pred[range(len(output)), maxOutput] = 1
         print('pred.shape: ', pred.shape)
         accuracy = sum(pred == labels.cpu().numpy())/len(labels)
+        loss = criterion(output, labels)
+        all_losses.append(loss.data[0].cpu().numpy())
         print('accuracy.shape: ', accuracy.shape)
         accuracy = accuracy[0]
         print('accuracy.shape: ', accuracy.shape)
         all_accuracies.append(accuracy)
         size_of_final_accuracy = len(output)
         
-    out = (sum(all_accuracies[0:-1])/len(all_accuracies)
+    out_accuracy = (sum(all_accuracies[0:-1])/len(all_accuracies)
         + all_accuracies[-1] / len(all_accuracies)
             * size_of_final_accuracy/batch_size)
-    sumfirst = sum(all_accuracies[0:-1])
-    print('\nsumfirst: ', sumfirst)
-    sumfirst = sumfirst / len(all_accuracies)
-    print('sumfirst: ', sumfirst)
-    part2 = (all_accuracies[-1] / len(all_accuracies)
-             * (size_of_final_accuracy/batch_size))
-    print('part2: ', part2)
-    final = sumfirst + part2
-    print('final: ', final)
-    print('    out: ', out)
+    out_loss = (sum(all_losses[0:-1])/len(all_losses)
+        + all_losses[-1] / len(all_losses)
+            * size_of_final_accuracy/batch_size)
+    print('    out_accuracy: ', out_accuracy)
     print('    old: ', sum(all_accuracies)/len(all_accuracies))
     print('    final accuracy: ', all_accuracies[-1])
     print(all_accuracies, '\n')
-    return out
+    return out_accuracy, out_loss

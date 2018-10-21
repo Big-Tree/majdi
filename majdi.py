@@ -201,7 +201,7 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 500
+STEPS = 200
 DEVICE = torch.device('cuda:0')
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
@@ -227,6 +227,7 @@ optimizer = optim.Adam(net.parameters())
 #print(list(net.parameters()))
 criterion = nn.MSELoss()
 losses = []
+val_losses = []
 accuracies = []
 val_accuracies = []
 for i in range(STEPS):
@@ -247,17 +248,21 @@ for i in range(STEPS):
     accuracies.append(accuracy)
     # Track losses
     loss = criterion(output, labels)
-    losses.append(loss.data[0].cpu().numpy())
+    losses.append(loss.item())
     # Calculate and track validation accuracy
 
     # Calculate validation accuracy based on all val images
-    val_accuracies.append(
+    forward_time = time.time()
+    tmp_acc, tmp_loss = (
         get_accuracy_epoch(
             net,
+            criterion,
             dataset.get_batch_val_all(),
             dataset.get_labels_val_all(),
             20))
-
+    val_accuracies.append(tmp_acc)
+    val_losses.append(tmp_loss)
+    forward_time = time.time() - forward_time
 
 
    # val_batch = dataset.get_batch_val()
@@ -271,8 +276,11 @@ for i in range(STEPS):
 
 
     # Compute gradients and optimise
+    optimise_time = time.time()
     loss.backward()
     optimizer.step()
+    optimise_time = time.time() - optimise_time
+    print('\n\n\nforward_time: ', forward_time,'\noptimise_time: ', optimise_time)
 
 
 # Plot loss
@@ -280,7 +288,9 @@ plt.figure()
 plt.title('Loss')
 plt.xlabel('Steps')
 plt.ylabel('Loss')
-plt.plot(range(len(losses)), losses)
+plt.plot(range(len(losses)), losses, label='train')
+plt.plot(range(len(val_losses)), val_losses, label='val')
+plt.legend()
 
 # Plot accuracy
 plt.figure()
