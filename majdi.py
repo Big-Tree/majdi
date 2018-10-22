@@ -215,7 +215,7 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 5
+STEPS = 150
 DEVICE = torch.device('cuda:0')
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
@@ -352,12 +352,15 @@ plt.grid(True)
 plt.legend()
 
 optimizer.zero_grad()
-fpr, tpr = get_roc_curve(
+fpr, tpr, auc= get_roc_curve(
     net,
     dataset.get_batch_val_all(),
     dataset.get_labels_val_all(),
     optimizer,
     10)
+plt.figure()
+plt.title('ROC Curve')
+plt.plot(fpr, tpr, label='Area = {:.2f}'.format(auc))
 print('fpr:\n', fpr)
 print('tpr:\n', tpr)
 

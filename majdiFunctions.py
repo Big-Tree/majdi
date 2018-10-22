@@ -82,6 +82,11 @@ def get_roc_curve(net, data_all, labels_all, optimizer, batch_size):
     print('y_score.shape: ', y_score.shape)
     # Unconvert from onehot format
     y_true = y_true[:,1]
+    print('y_true.shape: ', y_true.shape)
+    print('y_score.shape: ', y_score.shape)
+    print('y_true: ', y_true)
+    print('y_score: ', y_score)
+    y_true = y_true.astype(int)
     y_score = y_score[range(len(y_score)), y_true]
     print('y_true.shape: ', y_true.shape)
     print('y_score.shape: ', y_score.shape)
@@ -89,4 +94,5 @@ def get_roc_curve(net, data_all, labels_all, optimizer, batch_size):
     print('y_score: ', y_score)
 
     fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score)
-    return fpr, tpr
+    auc = metrics.roc_auc_score(y_true, y_score)
+    return fpr, tpr, auc
