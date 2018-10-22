@@ -253,7 +253,6 @@ val_accuracies_smooth = []
 train_accuracies_smooth = []
 for i in range(STEPS):
     print('\n\nStep (', i, '/', STEPS, ')')
-    forward_time = time.time()
     if i % STATS_STEPS == 0:
         # Calculate training accuracy and loss on all train images
         print('    TRAIN STATS...')
@@ -280,7 +279,6 @@ for i in range(STEPS):
         val_accuracies_smooth.append(tmp_acc)
         val_losses_smooth.append(tmp_loss)
 
-    forward_time = time.time() - forward_time
     print('    OPTIMISE...')
     # Calculate loss and accuracy for single step
     # get data for step
@@ -318,11 +316,8 @@ for i in range(STEPS):
 
 
     # Compute gradients and optimise
-    optimise_time = time.time()
     loss.backward()
     optimizer.step()
-    optimise_time = time.time() - optimise_time
-    print('forward_time: ', forward_time,'\noptimise_time: ', optimise_time)
 
 
 # Plot loss
@@ -332,8 +327,11 @@ plt.xlabel('Steps')
 plt.ylabel('Loss')
 #plt.plot(range(len(train_losses_step)), train_losses_step, label='train')
 #plt.plot(range(len(val_losses_step)), val_losses_step, label='val')
-plt.plot(range(len(val_losses_smooth)), val_losses_smooth, label='validation')
-plt.plot(range(len(train_losses_smooth)), train_losses_smooth,
+plt.plot(range(0, len(val_losses_smooth)*STATS_STEPS, STATS_STEPS),
+         val_losses_smooth,
+         label='validation')
+plt.plot(range(0, len(train_losses_smooth)*STATS_STEPS, STATS_STEPS),
+         train_losses_smooth,
          label='train')
 plt.grid(True)
 plt.legend()
@@ -354,6 +352,27 @@ plt.plot(range(0, len(train_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
 plt.grid(True)
 plt.legend()
 
+
+# ROC Training
+optimizer.zero_grad()
+fpr, tpr, auc= get_roc_curve(
+    net,
+    dataset.get_batch_train_all(),
+    dataset.get_labels_train_all(),
+    optimizer,
+    10)
+plt.figure()
+plt.title('ROC Curve - Training')
+plt.plot(fpr, tpr, label='Area = {:.2f}'.format(auc))
+plt.plot([0,1],[0,1], linestyle='dashed', color='k')
+plt.grid(True)
+plt.xlabel('False positive rate')
+plt.ylabel('True positive rate')
+plt.legend()
+print('fpr:\n', fpr)
+print('tpr:\n', tpr)
+
+# ROC Validation
 optimizer.zero_grad()
 fpr, tpr, auc= get_roc_curve(
     net,
@@ -362,8 +381,12 @@ fpr, tpr, auc= get_roc_curve(
     optimizer,
     10)
 plt.figure()
-plt.title('ROC Curve')
+plt.title('ROC Curve - Validation')
 plt.plot(fpr, tpr, label='Area = {:.2f}'.format(auc))
+plt.plot([0,1],[0,1], linestyle='dashed', color='k')
+plt.grid(True)
+plt.xlabel('False positive rate')
+plt.ylabel('True positive rate')
 plt.legend()
 print('fpr:\n', fpr)
 print('tpr:\n', tpr)
