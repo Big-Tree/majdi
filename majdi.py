@@ -215,8 +215,9 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 150
+STEPS = 1000
 DEVICE = torch.device('cuda:0')
+STATS_STEPS = 5 # Every 5 steps get loss and accuracy stats
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
 print('dataset.train[data].shape: ', dataset.train['data'].shape)
@@ -252,32 +253,32 @@ val_accuracies_smooth = []
 train_accuracies_smooth = []
 for i in range(STEPS):
     print('\n\nStep (', i, '/', STEPS, ')')
-
     forward_time = time.time()
-    # Calculate training accuracy and loss on all train images
-    print('    TRAIN STATS...')
-    tmp_acc, tmp_loss = (
-        get_stats_epoch(
-            net,
-            criterion,
-            dataset.get_batch_train_all(),
-            dataset.get_labels_train_all(),
-            25))
-    train_accuracies_smooth.append(tmp_acc)
-    train_losses_smooth.append(tmp_loss)
+    if i % STATS_STEPS == 0:
+        # Calculate training accuracy and loss on all train images
+        print('    TRAIN STATS...')
+        tmp_acc, tmp_loss = (
+            get_stats_epoch(
+                net,
+                criterion,
+                dataset.get_batch_train_all(),
+                dataset.get_labels_train_all(),
+                25))
+        train_accuracies_smooth.append(tmp_acc)
+        train_losses_smooth.append(tmp_loss)
 
 
-    # Calculate validation accuracy and loss based on all val images
-    print('    VAL STATS...')
-    tmp_acc, tmp_loss = (
-        get_stats_epoch(
-            net,
-            criterion,
-            dataset.get_batch_val_all(),
-            dataset.get_labels_val_all(),
-            25))
-    val_accuracies_smooth.append(tmp_acc)
-    val_losses_smooth.append(tmp_loss)
+        # Calculate validation accuracy and loss based on all val images
+        print('    VAL STATS...')
+        tmp_acc, tmp_loss = (
+            get_stats_epoch(
+                net,
+                criterion,
+                dataset.get_batch_val_all(),
+                dataset.get_labels_val_all(),
+                25))
+        val_accuracies_smooth.append(tmp_acc)
+        val_losses_smooth.append(tmp_loss)
 
     forward_time = time.time() - forward_time
     print('    OPTIMISE...')
@@ -344,9 +345,11 @@ plt.xlabel('Steps')
 plt.ylabel('Accuracy')
 #plt.plot(range(len(train_accuracies_step)), train_accuracies_step, label='train')
 #plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val')
-plt.plot(range(len(val_accuracies_smooth)), val_accuracies_smooth,
+plt.plot(range(0, len(val_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
+         val_accuracies_smooth,
          label='validation')
-plt.plot(range(len(train_accuracies_smooth)), train_accuracies_smooth,
+plt.plot(range(0, len(train_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
+         train_accuracies_smooth,
          label='train')
 plt.grid(True)
 plt.legend()
@@ -361,6 +364,7 @@ fpr, tpr, auc= get_roc_curve(
 plt.figure()
 plt.title('ROC Curve')
 plt.plot(fpr, tpr, label='Area = {:.2f}'.format(auc))
+plt.legend()
 print('fpr:\n', fpr)
 print('tpr:\n', tpr)
 
