@@ -215,9 +215,11 @@ device = torch.device('cpu')
 device = torch.device('cuda:0') # Run on GPU
 # Globals:
 BATCH_SIZE = 25
-STEPS = 1000
+STEPS = 2000
 DEVICE = torch.device('cuda:0')
-STATS_STEPS = 5 # Every 5 steps get loss and accuracy stats
+STATS_STEPS = int(STEPS/100) # Every 5 steps get loss and accuracy stats
+if STATS_STEPS < 1:
+    STATS_STEPS = 5
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
 print('dataset.train[data].shape: ', dataset.train['data'].shape)
@@ -382,7 +384,7 @@ fpr, tpr, auc= get_roc_curve(
     10)
 plt.figure()
 plt.title('ROC Curve - Validation')
-plt.plot(fpr, tpr, label='Area = {:.2f}'.format(auc))
+plt.plot(tpr, fpr, label='Area = {:.2f}'.format(auc))
 plt.plot([0,1],[0,1], linestyle='dashed', color='k')
 plt.grid(True)
 plt.xlabel('False positive rate')
