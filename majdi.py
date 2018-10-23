@@ -217,9 +217,9 @@ device = torch.device('cuda:0') # Run on GPU
 BATCH_SIZE = 25
 STEPS = 2000
 DEVICE = torch.device('cuda:0')
-STATS_STEPS = int(STEPS/100) # Every 5 steps get loss and accuracy stats
+STATS_STEPS = int(STEPS/100) 
 if STATS_STEPS < 1:
-    STATS_STEPS = 5
+    STATS_STEPS = 5 # Every 5 steps get loss and accuracy stats
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
 print('dataset.train[data].shape: ', dataset.train['data'].shape)
@@ -254,7 +254,7 @@ val_accuracies_step = []
 val_accuracies_smooth = []
 train_accuracies_smooth = []
 for i in range(STEPS):
-    print('\n\nStep (', i, '/', STEPS, ')')
+    print('Step (', i, '/', STEPS, ')')
     if i % STATS_STEPS == 0:
         # Calculate training accuracy and loss on all train images
         print('    TRAIN STATS...')
@@ -384,7 +384,8 @@ fpr, tpr, auc= get_roc_curve(
     10)
 plt.figure()
 plt.title('ROC Curve - Validation')
-plt.plot(tpr, fpr, label='Area = {:.2f}'.format(auc))
+plt.plot(fpr, tpr, label='Area = {:.2f}'.format(auc)) # ***********
+# ROC is backwards - investigate
 plt.plot([0,1],[0,1], linestyle='dashed', color='k')
 plt.grid(True)
 plt.xlabel('False positive rate')

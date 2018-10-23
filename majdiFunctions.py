@@ -77,6 +77,12 @@ def get_roc_curve(net, data_all, labels_all, optimizer, batch_size):
         #print('y_score.shape: ', np.asarray(y_score).shape)
         #print('y_true.shape: ', np.asarray(y_true).shape)
     y_true = np.asarray(y_true)
+    # Class 0 are the cancers so we need to swap the labels for ROC
+    y_mask = y_true==0
+    print('y_mask:\n', y_mask)
+    y_true = np.zeros(y_true.shape)
+    print('y_true:\n', y_true)
+    y_true[y_mask] = 1
     y_score = np.asarray(y_score)
     print('y_true.shape: ', y_true.shape)
     print('y_score.shape: ', y_score.shape)
