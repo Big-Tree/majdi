@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import sys
-sys.path.append('/vol/research/mammo2/will/python/usefulFunctions')
+sys.path.append('/vol/research/mammo/mammo2/will/python/usefulFunctions')
 import usefulFunctions as uf
 from majdiFunctions import *
 
@@ -25,12 +25,14 @@ class LoadDataSet():
         print('Getting file list...')
         file_list = {
             'backgrounds': uf.get_files(
-                '/vol/research/mammo2/will/data/prem/Segments',
+                '/vol/research/mammo/mammo2/will/data/prem/Segments',
                 '2D_dim2d.dcm'),
             'lesions': uf.get_files(
-                '/vol/research/mammo2/will/data/prem/2D/6mm',
+                '/vol/research/mammo/mammo2/will/data/prem/2D/6mm',
                 '*.dcm')}
-
+        # Balance the dataset
+        file_list['backgrounds'] = file_list['backgrounds'][
+            0 : len(file_list['lesions'])]
         # Load in dicom images to RAM
         dicom_images = {'backgrounds':[], 'lesions':[]}
         for key in file_list:
@@ -47,7 +49,11 @@ class LoadDataSet():
         # Split the data into training and val
         # Mix the lesions and backgrounds
         # [[img, label], [img, label]]
+        # Note - dictionaries preserve insertion order
         dataset_mixer = []
+        it = iter(rgb_images)
+        print('class 0: {}'.format(next(it)))
+        print('class 1: {}'.format(next(it)))
         for index, key in enumerate(rgb_images):
             for img in rgb_images[key]:
                 dataset_mixer.append({
@@ -89,6 +95,10 @@ class LoadDataSet():
         print('max self.val: ', np.amax(self.val['data']))
 
 
+    def show_images(self):
+      pass
+
+
     def get_batch_train(self, verbose = False):
         self.batch_number += 1
         indices = range(
@@ -100,13 +110,13 @@ class LoadDataSet():
         if verbose == True: print('out.shape: ', out.shape)
         if verbose == True: print('out.dtype: ', out.dtype)
         out = torch.from_numpy(out).float()
-        out = out.to(device)
+        out = out.to(DEVICE)
         if verbose == True: print('out.shape_post: ', out.shape)
         return out
     def get_batch_train_all(self):
         out = self.train['data']
         out = torch.from_numpy(out).float()
-        out = out.to(device)
+        out = out.to(DEVICE)
         return out
     def get_labels_train(self, verbose = False):
         indices = range(
@@ -114,13 +124,13 @@ class LoadDataSet():
             self.batch_number*self.batch_size)
         out = self.train['labels'].take(indices, mode='wrap', axis=0)
         out = torch.from_numpy(out).float()
-        out = out.to(device)
+        out = out.to(DEVICE)
         if verbose == True: print('out.dtype: ', out.dtype)
         return out
     def get_labels_train_all(self):
         out = self.train['labels']
         out = torch.from_numpy(out).float()
-        out = out.to(device)
+        out = out.to(DEVICE)
         return out
     def get_batch_val(self):
         indices = range(
@@ -129,12 +139,12 @@ class LoadDataSet():
         out = self.val['data'].take(indices, mode='wrap', axis=0)
         #out = out.astype(np.float64)
         out = torch.from_numpy(out).float()
-        out = out.to(device)
+        out = out.to(DEVICE)
         return out
     def get_batch_val_all(self):
         out = self.val['data']
         out = torch.from_numpy(out).float()
-        out = out.to(device)
+        out = out.to(DEVICE)
         return out
     def get_labels_val(self):
         indices = range(
@@ -142,12 +152,12 @@ class LoadDataSet():
             self.batch_number*self.batch_size)
         out = self.val['labels'].take(indices, mode='wrap', axis=0)
         out = torch.from_numpy(out).float()
-        out = out.to(device)
+        out = out.to(DEVICE)
         return out
     def get_labels_val_all(self):
         out = self.val['labels']
         out = torch.from_numpy(out).float()
-        out = out.to(device)
+        out = out.to(DEVICE)
         return out
 
 
@@ -211,14 +221,13 @@ class Net(nn.Module):
 start_time = time.time()
 # Pre-sets
 dtype = torch.float # not sure what this does
-device = torch.device('cpu')
-device = torch.device('cuda:0') # Run on GPU
+#device = torch.device('cpu')
 # Globals:
 BATCH_SIZE = 25
-STEPS = 2000
-DEVICE = torch.device('cuda:0')
-STATS_STEPS = int(STEPS/100) 
-if STATS_STEPS < 1:
+STEPS = 1000
+DEVICE = torch.device('cuda:2')
+STATS_STEPS = int(STEPS/100)
+if STATS_STEPS <= 1:
     STATS_STEPS = 5 # Every 5 steps get loss and accuracy stats
 
 dataset = LoadDataSet(0.9, BATCH_SIZE, DEVICE)
@@ -287,19 +296,31 @@ for i in range(STEPS):
     batch = dataset.get_batch_train()
     batch_val = dataset.get_batch_val()
     optimizer.zero_grad()
+    net.save_softmax = True # <-----------------------------------------
     output = net(batch)
-    labels = dataset.get_labels_train()
+    labels_train = dataset.get_labels_train()
     labels_val = dataset.get_labels_val()
     # Calculate accuracy and track
-    pred = np.zeros((len(labels), 2))
+    pred = np.zeros((len(labels_train), 2))
     maxOutput = [np.argmax(_) for _ in output.data.cpu().numpy()]
     pred[range(BATCH_SIZE), maxOutput] = 1
-    accuracy = sum(pred == labels.cpu().numpy())/len(labels)
+    accuracy = sum(pred == labels_train.cpu().numpy())/len(labels_train)
     accuracy = accuracy[0]
     train_accuracies_step.append(accuracy)
+
+    # Test the softmax activations by comparing the acuracies
+    softmax_activations = net.softmax_out.detach().cpu().numpy()
+    print('softmax_activations: {}'.format(softmax_activations))
+    s_accuracy = softmax_activations.round() == labels_train.detach().cpu().numpy()
+    s_accuracy = sum(s_accuracy/len(s_accuracy))
+    print('Given accuracy: {}'.format(accuracy))
+    print('s_accuracy: {}'.format(s_accuracy))
     # Track losses
-    loss = criterion(output, labels)
+    loss = criterion(output, labels_train)
     train_losses_step.append(loss.item())
+
+
+
 
     # Calculate the validation accuracy and track
     output = net(batch_val)
@@ -308,6 +329,9 @@ for i in range(STEPS):
     pred[range(BATCH_SIZE), maxOutput] = 1
     accuracy = sum(pred == labels_val.cpu().numpy())/len(labels_val)
     accuracy = accuracy[0]
+    
+
+
     val_accuracies_step.append(accuracy)
     # Track losses
     loss_val = criterion(output, labels_val)
@@ -321,14 +345,13 @@ for i in range(STEPS):
     loss.backward()
     optimizer.step()
 
-
 # Plot loss
 plt.figure()
 plt.title('Loss')
 plt.xlabel('Steps')
 plt.ylabel('Loss')
-#plt.plot(range(len(train_losses_step)), train_losses_step, label='train')
-#plt.plot(range(len(val_losses_step)), val_losses_step, label='val')
+plt.plot(range(len(train_losses_step)), train_losses_step, label='train_step')
+plt.plot(range(len(val_losses_step)), val_losses_step, label='val_step')
 plt.plot(range(0, len(val_losses_smooth)*STATS_STEPS, STATS_STEPS),
          val_losses_smooth,
          label='validation')
@@ -351,6 +374,8 @@ plt.plot(range(0, len(val_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
 plt.plot(range(0, len(train_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
          train_accuracies_smooth,
          label='train')
+plt.plot(range(len(train_accuracies_step)), train_accuracies_step, label='train_step')
+plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val_step')
 plt.grid(True)
 plt.legend()
 

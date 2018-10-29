@@ -67,37 +67,43 @@ def get_roc_curve(net, data_all, labels_all, optimizer, batch_size):
     y_true = labels_all
     for i in range(minibatch.num_iterations):
         optimizer.zero_grad()
-        print('i: ', i)
         net.save_softmax = True
         out_data = minibatch.get_data()
         #print('out_data.shape: ',out_data.shape)
         output = net(out_data)
         y_score.extend(net.softmax_out.detach().cpu().numpy())
-        print(net.softmax_out.detach().cpu().numpy())
+        #print(net.softmax_out.detach().cpu().numpy())
         #print('y_score.shape: ', np.asarray(y_score).shape)
         #print('y_true.shape: ', np.asarray(y_true).shape)
     y_true = np.asarray(y_true)
-    # Class 0 are the cancers so we need to swap the labels for ROC
-    y_mask = y_true==0
-    print('y_mask:\n', y_mask)
-    y_true = np.zeros(y_true.shape)
-    print('y_true:\n', y_true)
-    y_true[y_mask] = 1
     y_score = np.asarray(y_score)
+
     print('y_true.shape: ', y_true.shape)
     print('y_score.shape: ', y_score.shape)
     # Unconvert from onehot format
-    y_true = y_true[:,1]
+    y_true = y_true[:,1] # BUUUUUUUG
+
+
     print('y_true.shape: ', y_true.shape)
     print('y_score.shape: ', y_score.shape)
     print('y_true: ', y_true)
     print('y_score: ', y_score)
     y_true = y_true.astype(int)
-    y_score = y_score[range(len(y_score)), y_true]
+    # select score for correct class
+    y_score = y_score[range(len(y_score)), 1]
     print('y_true.shape: ', y_true.shape)
     print('y_score.shape: ', y_score.shape)
+
+    # print out score and true
+    for a, b in zip(y_true, y_score):
+        print(y_true, y_score)
     print('y_true: ', y_true)
     print('y_score: ', y_score)
+
+    # Calculate the accuracy
+    tmp_accur = y_score.round()
+    accuracy = sum(y_score)/len(y_score)
+    print('Accuracy: {}'.format(accuracy))
 
     fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score)
     auc = metrics.roc_auc_score(y_true, y_score)
