@@ -261,13 +261,17 @@ train_losses_smooth = []
 train_accuracies_step = []
 val_accuracies_step = []
 val_accuracies_smooth = []
+val_accuracies_simple = [] # DELETE LINE
+val_accuracies_new = [] # DELETE LINE
 train_accuracies_smooth = []
+train_accuracies_simple = [] # DELETE LINE
+delme_accuracy = []
 for i in range(STEPS):
     print('Step (', i, '/', STEPS, ')')
     if i % STATS_STEPS == 0:
         # Calculate training accuracy and loss on all train images
         print('    TRAIN STATS...')
-        tmp_acc, tmp_loss = (
+        tmp_acc, tmp_loss, tmp_simple, tmp_new= (
             get_stats_epoch(
                 net,
                 criterion,
@@ -276,11 +280,12 @@ for i in range(STEPS):
                 25))
         train_accuracies_smooth.append(tmp_acc)
         train_losses_smooth.append(tmp_loss)
+        train_accuracies_simple.append(tmp_simple)
 
 
         # Calculate validation accuracy and loss based on all val images
         print('    VAL STATS...')
-        tmp_acc, tmp_loss = (
+        tmp_acc, tmp_loss, tmp_simple, tmp_new = (
             get_stats_epoch(
                 net,
                 criterion,
@@ -289,6 +294,8 @@ for i in range(STEPS):
                 25))
         val_accuracies_smooth.append(tmp_acc)
         val_losses_smooth.append(tmp_loss)
+        val_accuracies_simple.append(tmp_simple)
+        val_accuracies_new.append(tmp_new)
 
     print('    OPTIMISE...')
     # Calculate loss and accuracy for single step
@@ -310,7 +317,6 @@ for i in range(STEPS):
 
     # Test the softmax activations by comparing the acuracies
     softmax_activations = net.softmax_out.detach().cpu().numpy()
-    print('softmax_activations: {}'.format(softmax_activations))
     s_accuracy = softmax_activations.round() == labels_train.detach().cpu().numpy()
     s_accuracy = sum(s_accuracy/len(s_accuracy))
     print('Given accuracy: {}'.format(accuracy))
@@ -320,7 +326,19 @@ for i in range(STEPS):
     train_losses_step.append(loss.item())
 
 
-
+    # val accuracy redo
+    #output = net(batch_val)
+    #print('output.shape: {}'.format(output.shape))
+    #output = output.data.cpu().numpy() # (b, 2)
+    #output = output.round()
+    #print('output: {}'.format(output))
+    #print('labels: {}'.format(labels_val.cpu().numpy()))
+    #print('output == labels: {}'.format(output == labels_val.cpu().numpy()))
+    #print('output.shape: {}'.format(output.shape))
+    #accuracy = sum(output == labels_val.cpu().numpy())/len(output)
+    #accuracy = accuracy[0]
+    #delme_accuracy.append(accuracy)
+    #print('new accuracy: {}'.format(accuracy))
 
     # Calculate the validation accuracy and track
     output = net(batch_val)
@@ -329,7 +347,8 @@ for i in range(STEPS):
     pred[range(BATCH_SIZE), maxOutput] = 1
     accuracy = sum(pred == labels_val.cpu().numpy())/len(labels_val)
     accuracy = accuracy[0]
-    
+    print('old accuracy: {}'.format(accuracy))
+
 
 
     val_accuracies_step.append(accuracy)
@@ -379,6 +398,22 @@ plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val_step')
 plt.grid(True)
 plt.legend()
 
+# Plot accuracy compare test val_accuracies_simple
+plt.figure()
+plt.title('Compare accuracy methods')
+plt.xlabel('Steps')
+plt.ylabel('Accuracy')
+plt.plot(range(0, len(val_accuracies_simple)*STATS_STEPS, STATS_STEPS),
+         val_accuracies_simple,
+         label='validation_simple')
+plt.plot(range(0, len(val_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
+         val_accuracies_smooth,
+         label='validation_smooth')
+plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val_step')
+plt.plot(range(0, len(val_accuracies_new)*STATS_STEPS, STATS_STEPS),
+         val_accuracies_new, label='val_new')
+plt.grid(True)
+plt.legend()
 
 # ROC Training
 optimizer.zero_grad()
@@ -409,8 +444,7 @@ fpr, tpr, auc= get_roc_curve(
     10)
 plt.figure()
 plt.title('ROC Curve - Validation')
-plt.plot(fpr, tpr, label='Area = {:.2f}'.format(auc)) # ***********
-# ROC is backwards - investigate
+plt.plot(fpr, tpr, label='Area = {:.2f}'.format(auc))
 plt.plot([0,1],[0,1], linestyle='dashed', color='k')
 plt.grid(True)
 plt.xlabel('False positive rate')
@@ -428,4 +462,5 @@ for _ in params:
 #print(net)
 
 print('Running time:', '{:.2f}'.format(time.time() - start_time), ' s')
+
 plt.show()

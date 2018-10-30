@@ -30,6 +30,7 @@ class Minibatch:
 def get_stats_epoch(net, criterion,  data_all, labels_all, batch_size):
     minibatch = Minibatch(data_all, labels_all, batch_size)
     all_accuracies = []
+    all_accuracies_new = []
     all_losses = []
     size_of_final_accuracy = 0
     for i in range(minibatch.num_iterations):
@@ -44,7 +45,12 @@ def get_stats_epoch(net, criterion,  data_all, labels_all, batch_size):
         all_losses.append(loss.item())
         accuracy = accuracy[0]
         all_accuracies.append(accuracy)
+        print('headphones len(output): {}'.format(len(output)))
+        all_accuracies_new.append(accuracy*(len(output)/len(minibatch.data)))
         size_of_final_accuracy = len(output)
+
+    out_accuracy_simple = sum(all_accuracies)/len(all_accuracies)
+    out_accuracy_new = sum(all_accuracies_new)
 
     out_accuracy = (sum(all_accuracies[0:-1])/len(all_accuracies)
         + all_accuracies[-1] / len(all_accuracies)
@@ -52,58 +58,34 @@ def get_stats_epoch(net, criterion,  data_all, labels_all, batch_size):
     out_loss = (sum(all_losses[0:-1])/len(all_losses)
         + all_losses[-1] / len(all_losses)
             * size_of_final_accuracy/batch_size)
-    return out_accuracy, out_loss
+    return out_accuracy, out_loss, out_accuracy_simple, out_accuracy_new
 
 
 # Produces an ROC curve given softmax activation and labels
 # Will be given net, criterion, data_all, labels_all, batch_size
 def get_roc_curve(net, data_all, labels_all, optimizer, batch_size):
     minibatch = Minibatch(data_all, labels_all, batch_size)
-    print('minibatch.data.shape: ', minibatch.data.shape)
-    print('minibatch.labels.shape: ', minibatch.labels.shape)
-    print('minibatch.minibatch_size: ', minibatch.minibatch_size)
-    print('minibatch.num_iterations: ', minibatch.num_iterations)
     y_score = []
     y_true = labels_all
     for i in range(minibatch.num_iterations):
         optimizer.zero_grad()
         net.save_softmax = True
         out_data = minibatch.get_data()
-        #print('out_data.shape: ',out_data.shape)
         output = net(out_data)
         y_score.extend(net.softmax_out.detach().cpu().numpy())
-        #print(net.softmax_out.detach().cpu().numpy())
-        #print('y_score.shape: ', np.asarray(y_score).shape)
-        #print('y_true.shape: ', np.asarray(y_true).shape)
     y_true = np.asarray(y_true)
     y_score = np.asarray(y_score)
 
-    print('y_true.shape: ', y_true.shape)
-    print('y_score.shape: ', y_score.shape)
     # Unconvert from onehot format
-    y_true = y_true[:,1] # BUUUUUUUG
+    y_true = y_true[:,1] 
 
-
-    print('y_true.shape: ', y_true.shape)
-    print('y_score.shape: ', y_score.shape)
-    print('y_true: ', y_true)
-    print('y_score: ', y_score)
     y_true = y_true.astype(int)
-    # select score for correct class
+    # y_score is the probability of a lesion being present
     y_score = y_score[range(len(y_score)), 1]
-    print('y_true.shape: ', y_true.shape)
-    print('y_score.shape: ', y_score.shape)
 
     # print out score and true
     for a, b in zip(y_true, y_score):
         print(y_true, y_score)
-    print('y_true: ', y_true)
-    print('y_score: ', y_score)
-
-    # Calculate the accuracy
-    tmp_accur = y_score.round()
-    accuracy = sum(y_score)/len(y_score)
-    print('Accuracy: {}'.format(accuracy))
 
     fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score)
     auc = metrics.roc_auc_score(y_true, y_score)
