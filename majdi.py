@@ -8,6 +8,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import copy
 import sys
 sys.path.append('/vol/research/mammo/mammo2/will/python/usefulFunctions')
 import usefulFunctions as uf
@@ -285,20 +286,22 @@ optimizer = optim.Adam(net.parameters())
 #print(list(net.parameters()))
 criterion = nn.MSELoss()
 
-train_losses_step = []
-val_losses_step = []
-train_losses_smooth = []
-val_losses_smooth = []
-test_losses_smooth = []
-
-train_accuracies_step = []
-val_accuracies_step = []
-train_accuracies_smooth = []
-val_accuracies_smooth = []
-test_accuracies_smooth = []
-for i in range(STEPS):
-    print('Step (', i, '/', STEPS, ')')
-    if i % STATS_STEPS == 0:
+losses = {'step':{'train':[],
+                  'val':[]},
+          'smooth':{'train':[],
+                    'val':[],
+                    'test':[]}}
+accuracies = {'step':{'train':[], # Check that this variable *********
+                      'val':[]},
+              'smooth':{'train':[],
+                        'val':[],
+                        'test':[]}}
+model_best = {'loss':999,
+              'step':0,
+              'net':Net().to(DEVICE)}
+for step_counter in range(STEPS):
+    print('Step (', step_counter, '/', STEPS, ')')
+    if step_counter % STATS_STEPS == 0:
         # Calculate training accuracy and loss on all train images
         print('    TRAIN STATS...')
         tmp_acc, tmp_loss = (
@@ -308,8 +311,8 @@ for i in range(STEPS):
                 dataset.get_batch_train_all(),
                 dataset.get_labels_train_all(),
                 25))
-        train_accuracies_smooth.append(tmp_acc)
-        train_losses_smooth.append(tmp_loss)
+        accuracies['smooth']['train'].append(tmp_acc)
+        losses['smooth']['train'].append(tmp_loss)
 
         # Calculate validation accuracy and loss based on all val images
         print('    VAL STATS...')
@@ -320,8 +323,14 @@ for i in range(STEPS):
                 dataset.get_batch_val_all(),
                 dataset.get_labels_val_all(),
                 25))
-        val_accuracies_smooth.append(tmp_acc)
-        val_losses_smooth.append(tmp_loss)
+        accuracies['smooth']['val'].append(tmp_acc)
+        losses['smooth']['val'].append(tmp_loss)
+        # Save if best model
+        if tmp_loss < model_best['loss']:
+            model_best['loss'] = tmp_loss
+            model_best['step'] = step_counter
+            model_best['net'].load_state_dict(net.state_dict())
+            print('****New best model found :D')
 
         # Calculate test accuracy and loss based on all val images
         print('    TEST STATS...')
@@ -332,8 +341,8 @@ for i in range(STEPS):
                 dataset.get_batch_test_all(),
                 dataset.get_labels_test_all(),
                 25))
-        test_accuracies_smooth.append(tmp_acc)
-        test_losses_smooth.append(tmp_loss)
+        accuracies['smooth']['test'].append(tmp_acc)
+        losses['smooth']['test'].append(tmp_loss)
 
     print('    OPTIMISE...')
     # Calculate loss and accuracy for single step
@@ -351,11 +360,11 @@ for i in range(STEPS):
     pred[range(BATCH_SIZE), maxOutput] = 1
     accuracy = sum(pred == labels_train.cpu().numpy())/len(labels_train)
     accuracy = accuracy[0]
-    train_accuracies_step.append(accuracy)
+    accuracies['step']['train'].append(accuracy)
 
     # Track losses
     loss = criterion(output, labels_train)
-    train_losses_step.append(loss.item())
+    losses['step']['train'].append(loss.item())
 
     # Calculate the validation accuracy and track
     output = net(batch_val)
@@ -366,10 +375,10 @@ for i in range(STEPS):
     accuracy = accuracy[0]
     print('step val accuracy: {}'.format(accuracy))
 
-    val_accuracies_step.append(accuracy)
+    accuracies['step']['val'].append(accuracy)
     # Track losses
     loss_val = criterion(output, labels_val)
-    val_losses_step.append(loss_val.item())
+    losses['step']['val'].append(loss_val.item())
 
     # Compute gradients and optimise
     loss.backward()
@@ -380,17 +389,18 @@ plt.figure()
 plt.title('Loss')
 plt.xlabel('Steps')
 plt.ylabel('Loss')
-#plt.plot(range(len(train_losses_step)), train_losses_step, label='train_step')
-#plt.plot(range(len(val_losses_step)), val_losses_step, label='val_step')
-plt.plot(range(0, len(train_losses_smooth)*STATS_STEPS, STATS_STEPS),
-         train_losses_smooth,
+#plt.plot(range(len(losses['step']['train'])), losses['step']['train'], label='train_step')
+#plt.plot(range(len(losses['step']['val'])), losses['step']['val'], label='val_step')
+plt.plot(range(0, len(losses['smooth']['train'])*STATS_STEPS, STATS_STEPS),
+         losses['smooth']['train'],
          label='Train')
-plt.plot(range(0, len(val_losses_smooth)*STATS_STEPS, STATS_STEPS),
-         val_losses_smooth,
+plt.plot(range(0, len(losses['smooth']['val'])*STATS_STEPS, STATS_STEPS),
+         losses['smooth']['val'],
          label='Validation')
-plt.plot(range(0, len(test_losses_smooth)*STATS_STEPS, STATS_STEPS),
-         test_losses_smooth,
+plt.plot(range(0, len(losses['smooth']['test'])*STATS_STEPS, STATS_STEPS),
+         losses['smooth']['test'],
          label='Test')
+plt.axvline(x=model_best['step'],  linestyle='dashed', color='k')
 plt.grid(True)
 plt.legend()
 
@@ -399,22 +409,22 @@ plt.figure()
 plt.title('Accuracy')
 plt.xlabel('Steps')
 plt.ylabel('Accuracy')
-plt.plot(range(0, len(train_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
-         train_accuracies_smooth,
+plt.plot(range(0, len(accuracies['smooth']['train'])*STATS_STEPS, STATS_STEPS),
+         accuracies['smooth']['train'],
          label='Train')
-plt.plot(range(0, len(val_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
-         val_accuracies_smooth,
+plt.plot(range(0, len(accuracies['smooth']['val'])*STATS_STEPS, STATS_STEPS),
+         accuracies['smooth']['val'],
          label='Validation')
-plt.plot(range(0, len(test_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
-         test_accuracies_smooth,
+plt.plot(range(0, len(accuracies['smooth']['test'])*STATS_STEPS, STATS_STEPS),
+         accuracies['smooth']['test'],
          label='Test')
-#plt.plot(range(len(train_accuracies_step)), train_accuracies_step, label='train_step')
-#plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val_step')
+plt.axvline(x=model_best['step'],  linestyle='dashed', color='k')
+#plt.plot(range(len(accuracies['step']['train'])), accuracies['step']['train'], label='train_step')
+#plt.plot(range(len(accuracies['step']['val'])), accuracies['step']['val'], label='val_step')
 plt.grid(True)
 plt.legend()
 
 # ROC Training
-optimizer.zero_grad()
 fpr_train, tpr_train, auc_train= get_roc_curve(
     net,
     dataset.get_batch_train_all(),
@@ -422,7 +432,6 @@ fpr_train, tpr_train, auc_train= get_roc_curve(
     optimizer,
     10)
 # ROC Validation
-optimizer.zero_grad()
 fpr_val, tpr_val, auc_val= get_roc_curve(
     net,
     dataset.get_batch_val_all(),
@@ -430,9 +439,15 @@ fpr_val, tpr_val, auc_val= get_roc_curve(
     optimizer,
     10)
 # ROC Test
-optimizer.zero_grad()
 fpr_test, tpr_test, auc_test= get_roc_curve(
     net,
+    dataset.get_batch_test_all(),
+    dataset.get_labels_test_all(),
+    optimizer,
+    10)
+# ROC model_best
+fpr_best, tpr_best, auc_best= get_roc_curve(
+    model_best['net'],
     dataset.get_batch_test_all(),
     dataset.get_labels_test_all(),
     optimizer,
@@ -442,6 +457,7 @@ plt.title('ROC Curve - Training, Validation & Test')
 plt.plot(fpr_train, tpr_train, label='Train (area = {:.2f})'.format(auc_train))
 plt.plot(fpr_val, tpr_val, label='Validation (area = {:.2f})'.format(auc_val))
 plt.plot(fpr_test, tpr_test, label='Test - Area = {:.2f}'.format(auc_test))
+plt.plot(fpr_best, tpr_best, label='Model_best - Area = {:.2f}'.format(auc_best))
 plt.plot([0,1],[0,1], linestyle='dashed', color='k')
 plt.grid(True)
 plt.xlabel('False positive rate')
