@@ -224,7 +224,7 @@ dtype = torch.float # not sure what this does
 #device = torch.device('cpu')
 # Globals:
 BATCH_SIZE = 25
-STEPS = 1000
+STEPS = 5000
 DEVICE = torch.device('cuda:2')
 STATS_STEPS = int(STEPS/100)
 if STATS_STEPS <= 1:
@@ -271,7 +271,7 @@ for i in range(STEPS):
     if i % STATS_STEPS == 0:
         # Calculate training accuracy and loss on all train images
         print('    TRAIN STATS...')
-        tmp_acc, tmp_loss, tmp_simple, tmp_new= (
+        tmp_acc, tmp_loss = (
             get_stats_epoch(
                 net,
                 criterion,
@@ -280,12 +280,11 @@ for i in range(STEPS):
                 25))
         train_accuracies_smooth.append(tmp_acc)
         train_losses_smooth.append(tmp_loss)
-        train_accuracies_simple.append(tmp_simple)
 
 
         # Calculate validation accuracy and loss based on all val images
         print('    VAL STATS...')
-        tmp_acc, tmp_loss, tmp_simple, tmp_new = (
+        tmp_acc, tmp_loss = (
             get_stats_epoch(
                 net,
                 criterion,
@@ -294,8 +293,6 @@ for i in range(STEPS):
                 25))
         val_accuracies_smooth.append(tmp_acc)
         val_losses_smooth.append(tmp_loss)
-        val_accuracies_simple.append(tmp_simple)
-        val_accuracies_new.append(tmp_new)
 
     print('    OPTIMISE...')
     # Calculate loss and accuracy for single step
@@ -315,12 +312,6 @@ for i in range(STEPS):
     accuracy = accuracy[0]
     train_accuracies_step.append(accuracy)
 
-    # Test the softmax activations by comparing the acuracies
-    softmax_activations = net.softmax_out.detach().cpu().numpy()
-    s_accuracy = softmax_activations.round() == labels_train.detach().cpu().numpy()
-    s_accuracy = sum(s_accuracy/len(s_accuracy))
-    print('Given accuracy: {}'.format(accuracy))
-    print('s_accuracy: {}'.format(s_accuracy))
     # Track losses
     loss = criterion(output, labels_train)
     train_losses_step.append(loss.item())
@@ -347,7 +338,7 @@ for i in range(STEPS):
     pred[range(BATCH_SIZE), maxOutput] = 1
     accuracy = sum(pred == labels_val.cpu().numpy())/len(labels_val)
     accuracy = accuracy[0]
-    print('old accuracy: {}'.format(accuracy))
+    print('step val accuracy: {}'.format(accuracy))
 
 
 
@@ -369,8 +360,8 @@ plt.figure()
 plt.title('Loss')
 plt.xlabel('Steps')
 plt.ylabel('Loss')
-plt.plot(range(len(train_losses_step)), train_losses_step, label='train_step')
-plt.plot(range(len(val_losses_step)), val_losses_step, label='val_step')
+#plt.plot(range(len(train_losses_step)), train_losses_step, label='train_step')
+#plt.plot(range(len(val_losses_step)), val_losses_step, label='val_step')
 plt.plot(range(0, len(val_losses_smooth)*STATS_STEPS, STATS_STEPS),
          val_losses_smooth,
          label='validation')
@@ -385,33 +376,14 @@ plt.figure()
 plt.title('Accuracy')
 plt.xlabel('Steps')
 plt.ylabel('Accuracy')
-#plt.plot(range(len(train_accuracies_step)), train_accuracies_step, label='train')
-#plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val')
 plt.plot(range(0, len(val_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
          val_accuracies_smooth,
          label='validation')
 plt.plot(range(0, len(train_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
          train_accuracies_smooth,
          label='train')
-plt.plot(range(len(train_accuracies_step)), train_accuracies_step, label='train_step')
-plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val_step')
-plt.grid(True)
-plt.legend()
-
-# Plot accuracy compare test val_accuracies_simple
-plt.figure()
-plt.title('Compare accuracy methods')
-plt.xlabel('Steps')
-plt.ylabel('Accuracy')
-plt.plot(range(0, len(val_accuracies_simple)*STATS_STEPS, STATS_STEPS),
-         val_accuracies_simple,
-         label='validation_simple')
-plt.plot(range(0, len(val_accuracies_smooth)*STATS_STEPS, STATS_STEPS),
-         val_accuracies_smooth,
-         label='validation_smooth')
-plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val_step')
-plt.plot(range(0, len(val_accuracies_new)*STATS_STEPS, STATS_STEPS),
-         val_accuracies_new, label='val_new')
+#plt.plot(range(len(train_accuracies_step)), train_accuracies_step, label='train_step')
+#plt.plot(range(len(val_accuracies_step)), val_accuracies_step, label='val_step')
 plt.grid(True)
 plt.legend()
 

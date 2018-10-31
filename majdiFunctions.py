@@ -30,9 +30,7 @@ class Minibatch:
 def get_stats_epoch(net, criterion,  data_all, labels_all, batch_size):
     minibatch = Minibatch(data_all, labels_all, batch_size)
     all_accuracies = []
-    all_accuracies_new = []
     all_losses = []
-    size_of_final_accuracy = 0
     for i in range(minibatch.num_iterations):
         output = net(minibatch.get_data())
         labels = minibatch.get_labels()
@@ -41,25 +39,15 @@ def get_stats_epoch(net, criterion,  data_all, labels_all, batch_size):
         pred = np.zeros((len(output), 2))
         pred[range(len(output)), maxOutput] = 1
         accuracy = sum(pred == labels.cpu().numpy())/len(labels)
-        loss = criterion(output, labels)
-        all_losses.append(loss.item())
+        loss = criterion(output, labels).item()
+        all_losses.append(loss*(len(output)/len(minibatch.data)))
         accuracy = accuracy[0]
-        all_accuracies.append(accuracy)
-        print('headphones len(output): {}'.format(len(output)))
-        all_accuracies_new.append(accuracy*(len(output)/len(minibatch.data)))
-        size_of_final_accuracy = len(output)
+        all_accuracies.append(accuracy*(len(output)/len(minibatch.data)))
 
-    out_accuracy_simple = sum(all_accuracies)/len(all_accuracies)
-    out_accuracy_new = sum(all_accuracies_new)
+    out_accuracy = sum(all_accuracies)
+    out_loss = sum(all_losses)
 
-    out_accuracy = (sum(all_accuracies[0:-1])/len(all_accuracies)
-        + all_accuracies[-1] / len(all_accuracies)
-            * size_of_final_accuracy/batch_size)
-    out_loss = (sum(all_losses[0:-1])/len(all_losses)
-        + all_losses[-1] / len(all_losses)
-            * size_of_final_accuracy/batch_size)
-    return out_accuracy, out_loss, out_accuracy_simple, out_accuracy_new
-
+    return out_accuracy, out_loss
 
 # Produces an ROC curve given softmax activation and labels
 # Will be given net, criterion, data_all, labels_all, batch_size
@@ -82,10 +70,6 @@ def get_roc_curve(net, data_all, labels_all, optimizer, batch_size):
     y_true = y_true.astype(int)
     # y_score is the probability of a lesion being present
     y_score = y_score[range(len(y_score)), 1]
-
-    # print out score and true
-    for a, b in zip(y_true, y_score):
-        print(y_true, y_score)
 
     fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score)
     auc = metrics.roc_auc_score(y_true, y_score)
