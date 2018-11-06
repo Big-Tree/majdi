@@ -60,6 +60,8 @@ class LoadDataSet():
                 dataset_mixer.append({
                     'image': img,
                     'class': index})
+        if SEED != None:
+            random.seed(SEED) # Fix datasets
         random.shuffle(dataset_mixer)
         s_p = round(split_ratio*len(dataset_mixer))
         e_p = len(dataset_mixer)
@@ -232,7 +234,9 @@ class Net(nn.Module):
         if self.verbose == True: print('7: ', x.shape)
         x = self.fc1(x)
         if self.verbose == True: print('8: ', x.shape)
-        x = F.softmax(x, dim=1) # Should it be put through a relu? Is it dim 0?
+        #x = F.softmax(x, dim=1)
+        m = nn.LogSoftmax(dim=1)
+        x = m(x)
         if self.verbose == True: print('9: ', x.shape)
         if self.save_softmax == True:
             self.save_softmax = False
@@ -255,9 +259,10 @@ dtype = torch.float # not sure what this does
 #device = torch.device('cpu')
 # Globals:
 BATCH_SIZE = 25
-STEPS = 1500
+STEPS = 6000
 DEVICE = torch.device('cuda:2')
 STATS_STEPS = int(STEPS/100)
+SEED = 7
 if STATS_STEPS <= 1:
     STATS_STEPS = 5 # Every 5 steps get loss and accuracy stats
 
@@ -268,23 +273,21 @@ print('dataset.test[data].shape: ', dataset.test['data'].shape)
 print('dataset.train[labels].shape: ', dataset.train['labels'].shape)
 print('dataset.val[labels].shape: ', dataset.val['labels'].shape)
 print('dataset.test[labels].shape: ', dataset.test['labels'].shape)
-net = Net(verbose=False)
-net = net.to(DEVICE) # Enable GPU
+model = Net(verbose=False)
+model = model.to(DEVICE) # Enable GPU
 input = torch.randn(1, 1, 210, 210, device = DEVICE)
 input = torch.randn(1, 1, 211, 211, device = DEVICE)
 input = torch.randn(1, 1, 429, 429, device = DEVICE)
-output = net(input)
+output = model(input)
 
 
-# Use the gradients to update the weights
-#optimizer = optim.SGD(net.parameters(), lr=0.01)
-optimizer = optim.Adam(net.parameters())
+optimizer = optim.SGD(model.parameters(), lr=0.01)
+#optimizer = optim.Adam(model.parameters())
 
-# Print the parameters before and after
-# Before:
-#print('Network params before')
-#print(list(net.parameters()))
 criterion = nn.MSELoss()
+#criterion = nn.CrossEntropyLoss()
+#criterion = nn.NLLLoss()
+
 
 losses = {'step':{'train':[],
                   'val':[]},
@@ -298,7 +301,7 @@ accuracies = {'step':{'train':[], # Check that this variable *********
                         'test':[]}}
 model_best = {'loss':999,
               'step':0,
-              'net':Net().to(DEVICE)}
+              'model':Net().to(DEVICE)}
 for step_counter in range(STEPS):
     print('Step (', step_counter, '/', STEPS, ')')
     if step_counter % STATS_STEPS == 0:
@@ -306,7 +309,7 @@ for step_counter in range(STEPS):
         print('    TRAIN STATS...')
         tmp_acc, tmp_loss = (
             get_stats_epoch(
-                net,
+                model,
                 criterion,
                 dataset.get_batch_train_all(),
                 dataset.get_labels_train_all(),
@@ -318,7 +321,7 @@ for step_counter in range(STEPS):
         print('    VAL STATS...')
         tmp_acc, tmp_loss = (
             get_stats_epoch(
-                net,
+                model,
                 criterion,
                 dataset.get_batch_val_all(),
                 dataset.get_labels_val_all(),
@@ -329,14 +332,14 @@ for step_counter in range(STEPS):
         if tmp_loss < model_best['loss']:
             model_best['loss'] = tmp_loss
             model_best['step'] = step_counter
-            model_best['net'].load_state_dict(net.state_dict())
+            model_best['model'].load_state_dict(model.state_dict())
             print('****New best model found :D')
 
         # Calculate test accuracy and loss based on all val images
         print('    TEST STATS...')
         tmp_acc, tmp_loss = (
             get_stats_epoch(
-                net,
+                model,
                 criterion,
                 dataset.get_batch_test_all(),
                 dataset.get_labels_test_all(),
@@ -350,8 +353,8 @@ for step_counter in range(STEPS):
     batch = dataset.get_batch_train()
     batch_val = dataset.get_batch_val()
     optimizer.zero_grad()
-    net.save_softmax = True # <-----------------------------------------
-    output = net(batch)
+    model.save_softmax = True # <-----------------------------------------
+    output = model(batch)
     labels_train = dataset.get_labels_train()
     labels_val = dataset.get_labels_val()
     # Calculate accuracy and track
@@ -367,7 +370,7 @@ for step_counter in range(STEPS):
     losses['step']['train'].append(loss.item())
 
     # Calculate the validation accuracy and track
-    output = net(batch_val)
+    output = model(batch_val)
     pred = np.zeros((len(labels_val), 2))
     maxOutput = [np.argmax(_) for _ in output.data.cpu().numpy()]
     pred[range(BATCH_SIZE), maxOutput] = 1
@@ -426,28 +429,28 @@ plt.legend()
 
 # ROC Training
 fpr_train, tpr_train, auc_train= get_roc_curve(
-    net,
+    model,
     dataset.get_batch_train_all(),
     dataset.get_labels_train_all(),
     optimizer,
     10)
 # ROC Validation
 fpr_val, tpr_val, auc_val= get_roc_curve(
-    net,
+    model,
     dataset.get_batch_val_all(),
     dataset.get_labels_val_all(),
     optimizer,
     10)
 # ROC Test
 fpr_test, tpr_test, auc_test= get_roc_curve(
-    net,
+    model,
     dataset.get_batch_test_all(),
     dataset.get_labels_test_all(),
     optimizer,
     10)
 # ROC model_best
 fpr_best, tpr_best, auc_best= get_roc_curve(
-    model_best['net'],
+    model_best['model'],
     dataset.get_batch_test_all(),
     dataset.get_labels_test_all(),
     optimizer,
@@ -456,20 +459,20 @@ plt.figure()
 plt.title('ROC Curve - Training, Validation & Test')
 plt.plot(fpr_train, tpr_train, label='Train (area = {:.2f})'.format(auc_train))
 plt.plot(fpr_val, tpr_val, label='Validation (area = {:.2f})'.format(auc_val))
-plt.plot(fpr_test, tpr_test, label='Test - Area = {:.2f}'.format(auc_test))
-plt.plot(fpr_best, tpr_best, label='Model_best - Area = {:.2f}'.format(auc_best))
+plt.plot(fpr_test, tpr_test, label='Test (area = {:.2f})'.format(auc_test))
+plt.plot(fpr_best, tpr_best, label='Model_best (area = {:.2f})'.format(auc_best))
 plt.plot([0,1],[0,1], linestyle='dashed', color='k')
 plt.grid(True)
 plt.xlabel('False positive rate')
 plt.ylabel('True positive rate')
 plt.legend()
 
-params = list(net.parameters())
+params = list(model.parameters())
 print(len(params))
 for _ in params:
     print(_.size())
 #print(params[0].size())
-#print(net)
+#print(model)
 
 print('Running time:', '{:.2f}'.format(time.time() - start_time), ' s')
 

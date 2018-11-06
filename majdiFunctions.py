@@ -39,7 +39,8 @@ def get_stats_epoch(net, criterion,  data_all, labels_all, batch_size):
         pred = np.zeros((len(output), 2))
         pred[range(len(output)), maxOutput] = 1
         accuracy = sum(pred == labels.cpu().numpy())/len(labels)
-        loss = criterion(output, labels).item()
+        loss = criterion(output, labels)
+        loss = loss.item()
         all_losses.append(loss*(len(output)/len(minibatch.data)))
         accuracy = accuracy[0]
         all_accuracies.append(accuracy*(len(output)/len(minibatch.data)))
