@@ -6,23 +6,21 @@ import matplotlib.pyplot as plt
 def train_model(model, criterion, optimizer, num_epochs, device, datasets,
                 dataloader, scheduler=None):
     start_time = time.time()
-    best_acc = 0.0
     # Figures
+    stats = {'losses':{
+                 'train':[],
+                 'val':[],
+                 'test':[]},
+             'acc':{
+                 'train':[],
+                 'val':[],
+                 'test':[]}}
+    best_model = {'model':None,
+                  'epoch':0,
+                  'acc':0,
+                  'loss':69}
     f0 = plt.figure()
     f1 = plt.figure()
-    plt.figure(f0.number) # Change selected figure
-    #plt.axvline(x=model_best['step'],  linestyle='dashed', color='k')
-    plt.title('Loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.grid(True)
-    plt.figure(f1.number)
-    plt.title('Accuracy')
-    plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    plt.legend()
-    plt.grid(True)
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -63,17 +61,47 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
             epoch_loss = running_loss / len(datasets[phase])
             epoch_acc = (running_corrects.double() /
                          len(datasets[phase]))
+            stats['losses'][phase].append(epoch_loss)
+            stats['acc'][phase].append(epoch_acc)
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
 
             # keep best model
-            if phase == 'val' and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(model.state_dict())
+            if phase == 'val' and epoch_acc > best_model['acc']:
+                best_model['acc'] = epoch_acc.item()
+                best_model['loss'] = epoch_loss
+                best_model['model'] = copy.deepcopy(model.state_dict())
+                best_model['epoch'] = epoch
+            # Plot loss
+            plt.figure(f0.number)
+            plt.cla() #Clear axis
+            plt.title('Loss')
+            plt.xlabel('Epochs')
+            plt.ylabel('Loss')
+            plt.grid(True)
+            plt.axvline(x=best_model['epoch'],  linestyle='dashed', color='k')
+            plt.plot(stats['losses']['train'], label='train')
+            plt.plot(stats['losses']['val'], label='val ('+'{:.2f}'.format(
+                best_model['loss'])+')')
+            plt.legend()
+            plt.pause(0.001)
+            # Plot accuracy
+            plt.figure(f1.number)
+            plt.cla() #Clear axis
+            plt.title('TrainingAccuracy')
+            plt.xlabel('Epochs')
+            plt.ylabel('Accuracy')
+            plt.grid(True)
+            plt.axvline(x=best_model['epoch'],  linestyle='dashed', color='k')
+            plt.plot(stats['acc']['train'], label='train')
+            plt.plot(stats['acc']['val'], label='val ('+'{:.2f}'.format(
+                    best_model['acc']) + ')')
+            plt.legend()
+            plt.pause(0.001)
         
 
         print()
     time_elapsed = time.time() - start_time
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
-    print('Best val Acc: {:4f}'.format(best_acc))
+    print('Best val Acc: {:4f}'.format(best_model['acc']))

@@ -255,8 +255,8 @@ input = torch.randn(1, 1, 429, 429, device = DEVICE)
 output = model(input)
 
 
-optimizer = optim.SGD(model.parameters(), lr=0.01)
-#optimizer = optim.Adam(model.parameters())
+#optimizer = optim.SGD(model.parameters(), lr=0.01)
+optimizer = optim.Adam(model.parameters())
 
 criterion = nn.MSELoss()
 #criterion = nn.CrossEntropyLoss()
