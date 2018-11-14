@@ -59,70 +59,47 @@ def load_data_set(split_ratio, device, seed):
     if seed != None:
         random.seed(seed) # Fix datasets
     random.shuffle(dataset_mixer)
+    # Set split points for train, val, test
     s_p = round(split_ratio*len(dataset_mixer))
     e_p = len(dataset_mixer)
-    s_p_val_test = round((s_p+e_p)/2)
-    train = {
-        'data': np.asarray([_['image'] for _ in dataset_mixer][0 : s_p]),
-        'labels': np.asarray([_['class'] for _ in dataset_mixer][0 : s_p])}
-    val = {
-        'data': np.asarray(
-            [_['image'] for _ in dataset_mixer][s_p : s_p_val_test]),
-        'labels': np.asarray(
-            [_['class'] for _ in dataset_mixer][s_p : s_p_val_test])}
-    test = {
-        'data': np.asarray(
-            [_['image'] for _ in dataset_mixer][s_p_val_test : ]),
-        'labels': np.asarray(
-            [_['class'] for _ in dataset_mixer][s_p_val_test : ])}
-    # Convert to one hot labels
-    tmp_labels = train['labels']
-    train['labels'] = np.zeros((len(tmp_labels), 2))
-    train['labels'][range(len(tmp_labels)), tmp_labels] = 1
+    s_p_val_test = round((s_p+e_p)/2) # DELETE
+    s_p_left = [0, s_p, round((s_p+e_p)/2)]
+    s_p_right = [s_p, round((s_p+e_p)/2), None]
+    datasets = {'train': None,
+               'val': None,
+               'test': None}
+    for i, key in enumerate(datasets):
+        # Split into train, val, test
+        datasets[key] = {
+            'data': np.asarray(
+                [_['image'] for _ in dataset_mixer][s_p_left[i]:s_p_right[i]]),
+            'labels': np.asarray(
+                [_['class'] for _ in dataset_mixer][s_p_left[i]:s_p_right[i]])}
+        # Convert to one hot labels
+        tmp_labels = datasets[key]['labels']
+        datasets[key]['labels'] = np.zeros((len(tmp_labels), 2))
+        datasets[key]['labels'][range(len(tmp_labels)), tmp_labels] = 1
+        # Reshape the images
+        tmp = datasets[key]['data'].shape
+        datasets[key]['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
 
-    tmp_labels = val['labels']
-    val['labels'] = np.zeros((len(tmp_labels), 2))
-    val['labels'][range(len(tmp_labels)), tmp_labels] = 1
-
-    tmp_labels = test['labels']
-    test['labels'] = np.zeros((len(tmp_labels), 2))
-    test['labels'][range(len(tmp_labels)), tmp_labels] = 1
-
-    # Reshape the images
-    tmp = train['data'].shape
-    train['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
-    tmp = val['data'].shape
-    val['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
-    tmp = test['data'].shape
-    test['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
-
-    # Normalise between -1 and 1
     # Get max value
-    max_pixel = np.amax([np.amax(train['data']),
-                         np.amax(val['data']),
-                         np.amax(test['data'])])
+    max_pixel = np.amax([np.amax(datasets[key]['data']) for key in datasets])
     print('Max pixel: ', max_pixel)
-    train['data'] = train['data']/max_pixel*2 - 1
-    val['data'] = val['data']/max_pixel*2 - 1
-    test['data'] = test['data']/max_pixel*2 - 1
-    print('min train: ', np.amin(train['data']))
-    print('max train: ', np.amax(train['data']))
-    print('min val: ', np.amin(val['data']))
-    print('max val: ', np.amax(val['data']))
-    print('min test: ', np.amin(test['data']))
-    print('max test: ', np.amax(test['data']))
+    # Normalise between -1 and 1
+    for key in datasets:
+        datasets[key]['data'] = datasets[key]['data']/max_pixel*2 - 1
+        print('min {}: {}'.format(key, np.amin(datasets[key]['data'])))
+        print('max {}: {}'.format(key, np.amax(datasets[key]['data'])))
 
     # Load the images into the dataset class
-    out = {
-        'train':MajdiDataset(train['data'],
-                             train['labels'],
-                             transform=ToTensor()),
-        'val':MajdiDataset(val['data'],
-                           val['labels'],
-                           transform=ToTensor()),
-        'test':MajdiDataset(test['data'],
-                            test['labels'],
-                            transform=ToTensor())}
+    out = {'train':None,
+           'val':None,
+           'test':None}
+    for key in out:
+        out[key] = MajdiDataset(datasets[key]['data'],
+                             datasets[key]['labels'],
+                             transform=ToTensor())
 
     return out
 

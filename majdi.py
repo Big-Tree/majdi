@@ -133,6 +133,7 @@ def main():
     #criterion = nn.CrossEntropyLoss()
     #criterion = nn.NLLLoss()
 
+    # Build dataloaders
     dataloaders = {'train':None,
                   'val':None,
                   'test':None}
