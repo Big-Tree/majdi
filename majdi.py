@@ -5,8 +5,6 @@ import torch.optim as optim # gradient descent
 from torch.utils.data import DataLoader
 import torchvision
 from torchvision import datasets, models, transforms
-import random
-import pydicom
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,123 +19,6 @@ from train import *
 from rocCurve import *
 
 
-# Class to read the dicom images in for training and testing of the network
-# Function to read in the DICOM images, convert to numpy arrays, label and then
-# loads the images into three classes for train, val and test.  These classes,
-# which are returned will be used in the network main loop.
-# A split ratio of 0.8 will set 80% of the images for training, 10% for
-# validaiton and 10% for test
-# Class 0 - backgrounds... Class 1 - lesions
-def load_data_set(split_ratio, batch_size, device, seed):
-    # Initialise class variables:
-    # Load in the dicom files
-    # Get file list
-    print('Getting file list...')
-    file_list = {
-        'backgrounds': uf.get_files(
-            '/vol/research/mammo/mammo2/will/data/prem/Segments',
-            '2D_dim2d.dcm'),
-        'lesions': uf.get_files(
-            '/vol/research/mammo/mammo2/will/data/prem/2D/6mm',
-            '*.dcm')}
-    # Balance the dataset
-    file_list['backgrounds'] = file_list['backgrounds'][
-        0 : len(file_list['lesions'])]
-    # Load in dicom images to RAM
-    dicom_images = {'backgrounds':[], 'lesions':[]}
-    for key in file_list:
-        print('Loading dicom', key, '...')
-        for index, f in enumerate(file_list[key]):
-            dicom_images[key].append(pydicom.dcmread(f))
-            print('    ', index, '/', len(file_list[key]))
-    rgb_images = {'backgrounds':[], 'lesions':[]}
-    print('Converting dicom to RGB...')
-    for key in rgb_images:
-        for img in dicom_images[key]:
-            rgb_images[key].append(img.pixel_array)
-
-    # Split the data into training and val
-    # Mix the lesions and backgrounds
-    # [[img, label], [img, label]]
-    # Note - dictionaries preserve insertion order
-    dataset_mixer = []
-    it = iter(rgb_images)
-    print('class 0: {}'.format(next(it)))
-    print('class 1: {}'.format(next(it)))
-    for index, key in enumerate(rgb_images):
-        for img in rgb_images[key]:
-            dataset_mixer.append({
-                'image': img,
-                'class': index})
-    if seed != None:
-        random.seed(seed) # Fix datasets
-    random.shuffle(dataset_mixer)
-    s_p = round(split_ratio*len(dataset_mixer))
-    e_p = len(dataset_mixer)
-    s_p_val_test = round((s_p+e_p)/2)
-    train = {
-        'data': np.asarray([_['image'] for _ in dataset_mixer][0 : s_p]),
-        'labels': np.asarray([_['class'] for _ in dataset_mixer][0 : s_p])}
-    val = {
-        'data': np.asarray(
-            [_['image'] for _ in dataset_mixer][s_p : s_p_val_test]),
-        'labels': np.asarray(
-            [_['class'] for _ in dataset_mixer][s_p : s_p_val_test])}
-    test = {
-        'data': np.asarray(
-            [_['image'] for _ in dataset_mixer][s_p_val_test : ]),
-        'labels': np.asarray(
-            [_['class'] for _ in dataset_mixer][s_p_val_test : ])}
-    # Convert to one hot labels
-    tmp_labels = train['labels']
-    train['labels'] = np.zeros((len(tmp_labels), 2))
-    train['labels'][range(len(tmp_labels)), tmp_labels] = 1
-
-    tmp_labels = val['labels']
-    val['labels'] = np.zeros((len(tmp_labels), 2))
-    val['labels'][range(len(tmp_labels)), tmp_labels] = 1
-
-    tmp_labels = test['labels']
-    test['labels'] = np.zeros((len(tmp_labels), 2))
-    test['labels'][range(len(tmp_labels)), tmp_labels] = 1
-
-    # Reshape the images
-    tmp = train['data'].shape
-    train['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
-    tmp = val['data'].shape
-    val['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
-    tmp = test['data'].shape
-    test['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
-
-    # Normalise between -1 and 1
-    # Get max value
-    max_pixel = np.amax([np.amax(train['data']),
-                         np.amax(val['data']),
-                         np.amax(test['data'])])
-    print('Max pixel: ', max_pixel)
-    train['data'] = train['data']/max_pixel*2 - 1
-    val['data'] = val['data']/max_pixel*2 - 1
-    test['data'] = test['data']/max_pixel*2 - 1
-    print('min train: ', np.amin(train['data']))
-    print('max train: ', np.amax(train['data']))
-    print('min val: ', np.amin(val['data']))
-    print('max val: ', np.amax(val['data']))
-    print('min test: ', np.amin(test['data']))
-    print('max test: ', np.amax(test['data']))
-
-    # Load the images into the dataset class
-    out = {
-        'train':MajdiDataset(train['data'],
-                             train['labels'],
-                             transform=ToTensor()),
-        'val':MajdiDataset(val['data'],
-                           val['labels'],
-                           transform=ToTensor()),
-        'test':MajdiDataset(test['data'],
-                            test['labels'],
-                            transform=ToTensor())}
-
-    return out
 
 
 # Reproducing Majdi's work with his network architecture
@@ -204,14 +85,11 @@ def main():
     # Globals:
     BATCH_SIZE = 25
     MAX_EPOCH = 5
-    STEPS = 6000
     DEVICE = torch.device('cuda:2')
-    STATS_STEPS = int(STEPS/100)
     SEED = 7
-    if STATS_STEPS <= 1:
-        STATS_STEPS = 5 # Every 5 steps get loss and accuracy stats
 
-    datasets = load_data_set(0.8, BATCH_SIZE, DEVICE, SEED)
+    plt.ion()
+    datasets = load_data_set(0.8, DEVICE, SEED)
     print('len(datasets[train]): {}'.format(len(datasets['train'])))
     print('len(datasets[val]): {}'.format(len(datasets['val'])))
     print('len(datasets[test]): {}'.format(len(datasets['test'])))
@@ -245,41 +123,16 @@ def main():
         plt.imshow(img_stacked)
         plt.pause(0.001) # Displays the figures I think
 
-
-
     model = Net(verbose=False)
     model = model.to(DEVICE) # Enable GPU
-    print('model.parameters().is_cuda(): {}'.format(
-        next(model.parameters()).is_cuda))
-    print('model.parameters().device: {}'.format(
-        next(model.parameters()).device))
-    input = torch.randn(1, 1, 210, 210, device = DEVICE)
-    input = torch.randn(1, 1, 211, 211, device = DEVICE)
-    input = torch.randn(1, 1, 429, 429, device = DEVICE)
-    output = model(input)
 
-
+    # Training options
     #optimizer = optim.SGD(model.parameters(), lr=0.01)
     optimizer = optim.Adam(model.parameters())
-
     criterion = nn.MSELoss()
     #criterion = nn.CrossEntropyLoss()
     #criterion = nn.NLLLoss()
 
-
-    losses = {'step':{'train':[],
-                      'val':[]},
-              'smooth':{'train':[],
-                        'val':[],
-                        'test':[]}}
-    accuracies = {'step':{'train':[], # Check that this variable *********
-                          'val':[]},
-                  'smooth':{'train':[],
-                            'val':[],
-                            'test':[]}}
-    model_best = {'loss':999,
-                  'step':0,
-                  'model':Net().to(DEVICE)}
     dataloaders = {'train':None,
                   'val':None,
                   'test':None}
@@ -290,6 +143,7 @@ def main():
                                       num_workers=4)
     modes = ['train', 'val', 'test']
 
+    print_samples(dataloaders['train'], block=False, num_rows=2, num_cols=3)
     # Print some of the images
     #inputs, classes = next(iter(dataloaders['train']))
     data_dict = next(iter(dataloaders['train']))
@@ -320,6 +174,7 @@ def main():
     plt.grid(True)
     plt.legend()
     print('Running time:', '{:.2f}'.format(time.time() - start_time), ' s')
+    plt.ioff()
     plt.show()
 
 
