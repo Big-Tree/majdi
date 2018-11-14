@@ -18,6 +18,7 @@ import usefulFunctions as uf
 from majdiFunctions import *
 from dataset import *
 from train import *
+from rocCurve import *
 
 
 # Class to read the dicom images in for training and testing of the network
@@ -26,6 +27,7 @@ from train import *
 # which are returned will be used in the network main loop.
 # A split ratio of 0.8 will set 80% of the images for training, 10% for
 # validaiton and 10% for test
+# Class 0 - backgrounds... Class 1 - lesions
 def load_data_set(split_ratio, batch_size, device):
     # Initialise class variables:
     # Load in the dicom files
@@ -201,7 +203,7 @@ dtype = torch.float # not sure what this does
 #device = torch.device('cpu')
 # Globals:
 BATCH_SIZE = 25
-MAX_EPOCH = 100
+MAX_EPOCH = 10
 STEPS = 6000
 DEVICE = torch.device('cuda:2')
 STATS_STEPS = int(STEPS/100)
@@ -276,7 +278,7 @@ accuracies = {'step':{'train':[], # Check that this variable *********
 model_best = {'loss':999,
               'step':0,
               'model':Net().to(DEVICE)}
-dataloader = {'train': DataLoader(datasets['train'],
+dataloaders = {'train': DataLoader(datasets['train'],
                                   batch_size=BATCH_SIZE,
                                   shuffle=True,
                                   num_workers=4),
@@ -291,233 +293,35 @@ dataloader = {'train': DataLoader(datasets['train'],
 modes = ['train', 'val', 'test']
 
 # Print some of the images
-#inputs, classes = next(iter(dataloader['train']))
-data_dict = next(iter(dataloader['train']))
+#inputs, classes = next(iter(dataloaders['train']))
+data_dict = next(iter(dataloaders['train']))
 inputs = data_dict['image']
 
 train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
-            dataloader)
+            dataloaders)
 
-exit()
+# ROC Curve
+phases = ['train', 'val', 'test']
+fpr = {'train': None, 'val': None, 'test': None}
+tpr = {'train': None, 'val': None, 'test': None}
+auc = {'train': None, 'val': None, 'test': None}
+sens = {'train': None, 'val': None, 'test': None}
+spec = {'train': None, 'val': None, 'test': None}
 
-
-
-
-if 1 == 2:
-    for i_epoch in range(MAX_EPOCH):
-        for phase in modes:
-            # Training epoch
-            #for inputs, labels in dataloader[phase]:
-            for data_dict in dataloader[phase]:
-                inputs = data_dict['image']
-                labels = data_dict['label']
-                print('inputs: {}'.format(inputs))
-                print('labels: {}'.format(labels))
-                inputs = inputs.to(DEVICE, dtype=torch.float)
-                labels = labels.to(DEVICE, dtype=torch.float)
-                print('inputs: {}'.format(inputs))
-                print('labels: {}'.format(labels))
-                optimizer.zero_grad()
-                print('    model.parameters().device: {}'.format(next(model.parameters()).device))
-                print()
-                output = model(inputs)
-                # Calculate accuracy
-                output = round(output)
-                output = round(sample_batch['label'].data.cpu().numpy()) # (n,2)
-                labels = sample_batch['label'].data.cpu().numpy()
-                matches = [output[:,0] == labels[:, 0]]
-                accuracy = sum(matches)/len(matches)
-                accuracies['step']['train'].append(accuracy)
-
-                # Loss
-                loss = criterion(output, sample_batch['label'])
-                losses['step']['train'].append(loss.item())
-
-                # Optimise
-                loss.backwards()
-                optimiser.step()
-
-
-
-
-
-
-if 1 == 2:
-    for step_counter in range(STEPS):
-        print('Step (', step_counter, '/', STEPS, ')')
-        #if step_counter % STATS_STEPS == 0:
-           # # Calculate training accuracy and loss on all train images
-           # print('    TRAIN STATS...')
-           # tmp_acc, tmp_loss = (
-           #     get_stats_epoch(
-           #         model,
-           #         criterion,
-           #         [_['data'] for _ in train], # all train data
-           #         [_['labels'] for _ in train], # all train labels
-           #         25))
-           # accuracies['smooth']['train'].append(tmp_acc)
-           # losses['smooth']['train'].append(tmp_loss)
-
-           # # Calculate validation accuracy and loss based on all val images
-           # print('    VAL STATS...')
-           # tmp_acc, tmp_loss = (
-           #     get_stats_epoch(
-           #         model,
-           #         criterion,
-           #         [_['data'] for _ in val], # all val data
-           #         [_['labels'] for _ in val], # all val labels
-           #         25))
-           # accuracies['smooth']['val'].append(tmp_acc)
-           # losses['smooth']['val'].append(tmp_loss)
-           # # Save if best model
-           # if tmp_loss < model_best['loss']:
-           #     model_best['loss'] = tmp_loss
-           #     model_best['step'] = step_counter
-           #     model_best['model'].load_state_dict(model.state_dict())
-           #     print('****New best model found :D')
-
-           # # Calculate test accuracy and loss based on all val images
-           # print('    TEST STATS...')
-           # tmp_acc, tmp_loss = (
-           #     get_stats_epoch(
-           #         model,
-           #         criterion,
-           #         [_['data'] for _ in test], # all val data
-           #         [_['labels'] for _ in test], # all val labels
-           #         25))
-           # accuracies['smooth']['test'].append(tmp_acc)
-           # losses['smooth']['test'].append(tmp_loss)
-
-        print('    OPTIMISE...')
-
-        # Calculate loss and accuracy for single step
-        # get data for step
-        tmp = train_dataloader.next()
-        batch_train = tmp['data']
-        labels_train = tmp['lables']
-        tmp = val_dataloader.next()
-        batch_val = tmp['data']
-        labels_val = tmp['labels']
-
-        optimizer.zero_grad()
-        output = model(batch_train)
-        # Calculate accuracy and track
-        pred = np.zeros((len(labels_train), 2))
-        maxOutput = [np.argmax(_) for _ in output.data.cpu().numpy()]
-        pred[range(BATCH_SIZE), maxOutput] = 1
-        accuracy = sum(pred == labels_train.cpu().numpy())/len(labels_train)
-        accuracy = accuracy[0]
-        accuracies['step']['train'].append(accuracy)
-
-        # Track losses
-        loss = criterion(output, labels_train)
-        losses['step']['train'].append(loss.item())
-
-        # Calculate the validation accuracy and track
-        output = model(batch_val)
-        pred = np.zeros((len(labels_val), 2))
-        maxOutput = [np.argmax(_) for _ in output.data.cpu().numpy()]
-        pred[range(BATCH_SIZE), maxOutput] = 1
-        accuracy = sum(pred == labels_val.cpu().numpy())/len(labels_val)
-        accuracy = accuracy[0]
-        print('step val accuracy: {}'.format(accuracy))
-
-        accuracies['step']['val'].append(accuracy)
-        # Track losses
-        loss_val = criterion(output, labels_val)
-        losses['step']['val'].append(loss_val.item())
-
-        # Compute gradients and optimise
-        loss.backward()
-        optimizer.step()
-
-# Plot loss
 plt.figure()
-plt.title('Loss')
-plt.xlabel('Steps')
-plt.ylabel('Loss')
-#plt.plot(range(len(losses['step']['train'])), losses['step']['train'], label='train_step')
-#plt.plot(range(len(losses['step']['val'])), losses['step']['val'], label='val_step')
-plt.plot(range(0, len(losses['smooth']['train'])*STATS_STEPS, STATS_STEPS),
-         losses['smooth']['train'],
-         label='Train')
-plt.plot(range(0, len(losses['smooth']['val'])*STATS_STEPS, STATS_STEPS),
-         losses['smooth']['val'],
-         label='Validation')
-plt.plot(range(0, len(losses['smooth']['test'])*STATS_STEPS, STATS_STEPS),
-         losses['smooth']['test'],
-         label='Test')
-plt.axvline(x=model_best['step'],  linestyle='dashed', color='k')
-plt.grid(True)
-plt.legend()
-
-# Plot accuracy
-plt.figure()
-plt.title('Accuracy')
-plt.xlabel('Steps')
-plt.ylabel('Accuracy')
-plt.plot(range(0, len(accuracies['smooth']['train'])*STATS_STEPS, STATS_STEPS),
-         accuracies['smooth']['train'],
-         label='Train')
-plt.plot(range(0, len(accuracies['smooth']['val'])*STATS_STEPS, STATS_STEPS),
-         accuracies['smooth']['val'],
-         label='Validation')
-plt.plot(range(0, len(accuracies['smooth']['test'])*STATS_STEPS, STATS_STEPS),
-         accuracies['smooth']['test'],
-         label='Test')
-plt.axvline(x=model_best['step'],  linestyle='dashed', color='k')
-#plt.plot(range(len(accuracies['step']['train'])), accuracies['step']['train'], label='train_step')
-#plt.plot(range(len(accuracies['step']['val'])), accuracies['step']['val'], label='val_step')
-plt.grid(True)
-plt.legend()
-
-# ROC Training
-fpr_train, tpr_train, auc_train= get_roc_curve(
-    model,
-    dataset.get_batch_train_all(),
-    dataset.get_labels_train_all(),
-    optimizer,
-    10)
-# ROC Validation
-fpr_val, tpr_val, auc_val= get_roc_curve(
-    model,
-    dataset.get_batch_val_all(),
-    dataset.get_labels_val_all(),
-    optimizer,
-    10)
-# ROC Test
-fpr_test, tpr_test, auc_test= get_roc_curve(
-    model,
-    dataset.get_batch_test_all(),
-    dataset.get_labels_test_all(),
-    optimizer,
-    10)
-# ROC model_best
-fpr_best, tpr_best, auc_best= get_roc_curve(
-    model_best['model'],
-    dataset.get_batch_test_all(),
-    dataset.get_labels_test_all(),
-    optimizer,
-    10)
-plt.figure()
-plt.title('ROC Curve - Training, Validation & Test')
-plt.plot(fpr_train, tpr_train, label='Train (area = {:.2f})'.format(auc_train))
-plt.plot(fpr_val, tpr_val, label='Validation (area = {:.2f})'.format(auc_val))
-plt.plot(fpr_test, tpr_test, label='Test (area = {:.2f})'.format(auc_test))
-plt.plot(fpr_best, tpr_best, label='Model_best (area = {:.2f})'.format(auc_best))
-plt.plot([0,1],[0,1], linestyle='dashed', color='k')
-plt.grid(True)
+plt.title('ROC Curve')
 plt.xlabel('False positive rate')
 plt.ylabel('True positive rate')
+for phase in phases:
+    fpr[phase], tpr[phase], auc[phase], sens[phase], spec[phase] = roc_curve(
+        model, DEVICE, dataloaders[phase])
+    plt.plot(fpr[phase], tpr[phase], label=(
+        '{}: (area = {:.2f} sens = {:.2f} spec = {:.2f})'.format(
+            phase, auc[phase], sens[phase], spec[phase])))
+plt.plot([0,1],[0,1], linestyle='dashed', color='k')
+plt.grid(True)
 plt.legend()
-
-params = list(model.parameters())
-print(len(params))
-for _ in params:
-    print(_.size())
-#print(params[0].size())
-#print(model)
-
 print('Running time:', '{:.2f}'.format(time.time() - start_time), ' s')
-plt.ioff() # Turn interactive off so that plt.show blocks
 plt.show()
+exit()
+
