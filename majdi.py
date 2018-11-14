@@ -28,7 +28,7 @@ from rocCurve import *
 # A split ratio of 0.8 will set 80% of the images for training, 10% for
 # validaiton and 10% for test
 # Class 0 - backgrounds... Class 1 - lesions
-def load_data_set(split_ratio, batch_size, device):
+def load_data_set(split_ratio, batch_size, device, seed):
     # Initialise class variables:
     # Load in the dicom files
     # Get file list
@@ -69,8 +69,8 @@ def load_data_set(split_ratio, batch_size, device):
             dataset_mixer.append({
                 'image': img,
                 'class': index})
-    if SEED != None:
-        random.seed(SEED) # Fix datasets
+    if seed != None:
+        random.seed(seed) # Fix datasets
     random.shuffle(dataset_mixer)
     s_p = round(split_ratio*len(dataset_mixer))
     e_p = len(dataset_mixer)
@@ -196,132 +196,132 @@ class Net(nn.Module):
             num_features *= s
         return num_features
 
+def main():
+    start_time = time.time()
+    # Pre-sets
+    dtype = torch.float # not sure what this does
+    #device = torch.device('cpu')
+    # Globals:
+    BATCH_SIZE = 25
+    MAX_EPOCH = 5
+    STEPS = 6000
+    DEVICE = torch.device('cuda:2')
+    STATS_STEPS = int(STEPS/100)
+    SEED = 7
+    if STATS_STEPS <= 1:
+        STATS_STEPS = 5 # Every 5 steps get loss and accuracy stats
 
-start_time = time.time()
-# Pre-sets
-dtype = torch.float # not sure what this does
-#device = torch.device('cpu')
-# Globals:
-BATCH_SIZE = 25
-MAX_EPOCH = 10
-STEPS = 6000
-DEVICE = torch.device('cuda:2')
-STATS_STEPS = int(STEPS/100)
-SEED = 7
-if STATS_STEPS <= 1:
-    STATS_STEPS = 5 # Every 5 steps get loss and accuracy stats
+    datasets = load_data_set(0.8, BATCH_SIZE, DEVICE, SEED)
+    print('len(datasets[train]): {}'.format(len(datasets['train'])))
+    print('len(datasets[val]): {}'.format(len(datasets['val'])))
+    print('len(datasets[test]): {}'.format(len(datasets['test'])))
+    tmp = datasets['train'][0]['image'].shape
+    print('tmp: {}'.format(tmp))
+    #tmp = [_['image'] for _ in datasets['train']
+    print('datasets[train][0][image].shape: {}'.format(
+        datasets['train'][0]['image'].shape))
+    print('datasets[val][0][image].shape: {}'.format(
+        datasets['val'][0]['image'].shape))
+    print('datasets[test][0][image].shape: {}'.format(
+        datasets['test'][0]['image'].shape))
+    print('datasets[train][0][label]: {}'.format(
+        datasets['train'][0]['label'].shape))
+    print('datasets[val][0][label]: {}'.format(
+        datasets['val'][0]['label'].shape))
+    print('datasets[test][0][label]: {}'.format(
+        datasets['test'][0]['label'].shape))
 
-datasets = load_data_set(0.8, BATCH_SIZE, DEVICE)
-print('len(datasets[train]): {}'.format(len(datasets['train'])))
-print('len(datasets[val]): {}'.format(len(datasets['val'])))
-print('len(datasets[test]): {}'.format(len(datasets['test'])))
-tmp = datasets['train'][0]['image'].shape
-print('tmp: {}'.format(tmp))
-#tmp = [_['image'] for _ in datasets['train']
-print('datasets[train][0][image].shape: {}'.format(
-    datasets['train'][0]['image'].shape))
-print('datasets[val][0][image].shape: {}'.format(
-    datasets['val'][0]['image'].shape))
-print('datasets[test][0][image].shape: {}'.format(
-    datasets['test'][0]['image'].shape))
-print('datasets[train][0][label]: {}'.format(
-    datasets['train'][0]['label'].shape))
-print('datasets[val][0][label]: {}'.format(
-    datasets['val'][0]['label'].shape))
-print('datasets[test][0][label]: {}'.format(
-    datasets['test'][0]['label'].shape))
-
-# Print some of the images
-if 1 == 2:
-    plt.ion()
-    fig = plt.figure()
-    sample = datasets['train'][0]
-    print('\nsample[image].shape: {}\nsample[label].shape: {}'.format(
-        sample['image'].shape, sample['label'].shape))
-    img_stacked = np.stack((sample['image'],)*3, axis=-1)
-    img_stacked = np.squeeze(img_stacked)
-    img_stacked = (img_stacked + 1)/2
-    print('img_stacked.shape: {}'.format(img_stacked.shape))
-    plt.imshow(img_stacked)
-    plt.pause(0.001) # Displays the figures I think
-
-
-
-model = Net(verbose=False)
-model = model.to(DEVICE) # Enable GPU
-print('model.parameters().is_cuda(): {}'.format(next(model.parameters()).is_cuda))
-print('model.parameters().device: {}'.format(next(model.parameters()).device))
-input = torch.randn(1, 1, 210, 210, device = DEVICE)
-input = torch.randn(1, 1, 211, 211, device = DEVICE)
-input = torch.randn(1, 1, 429, 429, device = DEVICE)
-output = model(input)
+    # Print some of the images
+    if 1 == 2:
+        plt.ion()
+        fig = plt.figure()
+        sample = datasets['train'][0]
+        print('\nsample[image].shape: {}\nsample[label].shape: {}'.format(
+            sample['image'].shape, sample['label'].shape))
+        img_stacked = np.stack((sample['image'],)*3, axis=-1)
+        img_stacked = np.squeeze(img_stacked)
+        img_stacked = (img_stacked + 1)/2
+        print('img_stacked.shape: {}'.format(img_stacked.shape))
+        plt.imshow(img_stacked)
+        plt.pause(0.001) # Displays the figures I think
 
 
-#optimizer = optim.SGD(model.parameters(), lr=0.01)
-optimizer = optim.Adam(model.parameters())
 
-criterion = nn.MSELoss()
-#criterion = nn.CrossEntropyLoss()
-#criterion = nn.NLLLoss()
+    model = Net(verbose=False)
+    model = model.to(DEVICE) # Enable GPU
+    print('model.parameters().is_cuda(): {}'.format(
+        next(model.parameters()).is_cuda))
+    print('model.parameters().device: {}'.format(
+        next(model.parameters()).device))
+    input = torch.randn(1, 1, 210, 210, device = DEVICE)
+    input = torch.randn(1, 1, 211, 211, device = DEVICE)
+    input = torch.randn(1, 1, 429, 429, device = DEVICE)
+    output = model(input)
 
 
-losses = {'step':{'train':[],
-                  'val':[]},
-          'smooth':{'train':[],
-                    'val':[],
-                    'test':[]}}
-accuracies = {'step':{'train':[], # Check that this variable *********
+    #optimizer = optim.SGD(model.parameters(), lr=0.01)
+    optimizer = optim.Adam(model.parameters())
+
+    criterion = nn.MSELoss()
+    #criterion = nn.CrossEntropyLoss()
+    #criterion = nn.NLLLoss()
+
+
+    losses = {'step':{'train':[],
                       'val':[]},
               'smooth':{'train':[],
                         'val':[],
                         'test':[]}}
-model_best = {'loss':999,
-              'step':0,
-              'model':Net().to(DEVICE)}
-dataloaders = {'train': DataLoader(datasets['train'],
-                                  batch_size=BATCH_SIZE,
-                                  shuffle=True,
-                                  num_workers=4),
-              'val': DataLoader(datasets['val'],
-                                batch_size=BATCH_SIZE,
-                                shuffle=True,
-                                num_workers=4),
-              'test': DataLoader(datasets['test'],
-                                batch_size=BATCH_SIZE,
-                                shuffle=True,
-                                num_workers=4)}
-modes = ['train', 'val', 'test']
+    accuracies = {'step':{'train':[], # Check that this variable *********
+                          'val':[]},
+                  'smooth':{'train':[],
+                            'val':[],
+                            'test':[]}}
+    model_best = {'loss':999,
+                  'step':0,
+                  'model':Net().to(DEVICE)}
+    dataloaders = {'train':None,
+                  'val':None,
+                  'test':None}
+    for key in dataloaders:
+        dataloaders[key] = DataLoader(datasets[key],
+                                      batch_size=BATCH_SIZE,
+                                      shuffle=True,
+                                      num_workers=4)
+    modes = ['train', 'val', 'test']
 
-# Print some of the images
-#inputs, classes = next(iter(dataloaders['train']))
-data_dict = next(iter(dataloaders['train']))
-inputs = data_dict['image']
+    # Print some of the images
+    #inputs, classes = next(iter(dataloaders['train']))
+    data_dict = next(iter(dataloaders['train']))
+    inputs = data_dict['image']
 
-train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
-            dataloaders)
+    train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
+                dataloaders)
 
-# ROC Curve
-phases = ['train', 'val', 'test']
-fpr = {'train': None, 'val': None, 'test': None}
-tpr = {'train': None, 'val': None, 'test': None}
-auc = {'train': None, 'val': None, 'test': None}
-sens = {'train': None, 'val': None, 'test': None}
-spec = {'train': None, 'val': None, 'test': None}
+    # ROC Curve
+    phases = ['train', 'val', 'test']
+    fpr = {'train': None, 'val': None, 'test': None}
+    tpr = {'train': None, 'val': None, 'test': None}
+    auc = {'train': None, 'val': None, 'test': None}
+    sens = {'train': None, 'val': None, 'test': None}
+    spec = {'train': None, 'val': None, 'test': None}
 
-plt.figure()
-plt.title('ROC Curve')
-plt.xlabel('False positive rate')
-plt.ylabel('True positive rate')
-for phase in phases:
-    fpr[phase], tpr[phase], auc[phase], sens[phase], spec[phase] = roc_curve(
-        model, DEVICE, dataloaders[phase])
-    plt.plot(fpr[phase], tpr[phase], label=(
-        '{}: (area = {:.2f} sens = {:.2f} spec = {:.2f})'.format(
-            phase, auc[phase], sens[phase], spec[phase])))
-plt.plot([0,1],[0,1], linestyle='dashed', color='k')
-plt.grid(True)
-plt.legend()
-print('Running time:', '{:.2f}'.format(time.time() - start_time), ' s')
-plt.show()
-exit()
+    plt.figure()
+    plt.title('ROC Curve')
+    plt.xlabel('False positive rate')
+    plt.ylabel('True positive rate')
+    for phase in phases:
+        fpr[phase], tpr[phase], auc[phase], sens[phase], spec[phase] = (
+            roc_curve(model, DEVICE, dataloaders[phase]))
+        plt.plot(fpr[phase], tpr[phase], label=(
+            '{}: (area = {:.2f} sens = {:.2f} spec = {:.2f})'.format(
+                phase, auc[phase], sens[phase], spec[phase])))
+    plt.plot([0,1],[0,1], linestyle='dashed', color='k')
+    plt.grid(True)
+    plt.legend()
+    print('Running time:', '{:.2f}'.format(time.time() - start_time), ' s')
+    plt.show()
 
+
+if __name__ == '__main__':
+        main()

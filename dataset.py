@@ -1,7 +1,6 @@
 import torch
 from torch.utils.data import Dataset
 
-
 class ToTensor(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
