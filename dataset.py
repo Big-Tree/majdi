@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
+from torchvision import transforms
 import pydicom
 import random
 import sys
@@ -43,7 +44,6 @@ def load_data_set(split_ratio, device, seed):
         for img in dicom_images[key]:
             rgb_images[key].append(img.pixel_array)
 
-    # Split the data into training and val
     # Mix the lesions and backgrounds
     # [[img, label], [img, label]]
     # Note - dictionaries preserve insertion order
@@ -59,6 +59,7 @@ def load_data_set(split_ratio, device, seed):
     if seed != None:
         random.seed(seed) # Fix datasets
     random.shuffle(dataset_mixer)
+
     # Set split points for train, val, test
     s_p = round(split_ratio*len(dataset_mixer))
     e_p = len(dataset_mixer)
@@ -99,7 +100,9 @@ def load_data_set(split_ratio, device, seed):
     for key in out:
         out[key] = MajdiDataset(datasets[key]['data'],
                              datasets[key]['labels'],
-                             transform=ToTensor())
+                             transform=transforms.Compose([
+                                 transforms.RandomRotation(360),
+                                 ToTensor()]))
 
     return out
 
