@@ -84,7 +84,7 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 5
+    MAX_EPOCH = 200
     DEVICE = torch.device('cuda:2')
     SEED = 7
 
@@ -144,7 +144,7 @@ def main():
                                       num_workers=4)
     modes = ['train', 'val', 'test']
 
-    print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
+    print_samples(dataloaders['train'], block=True, num_rows=4, num_cols=5)
     # Print some of the images
     #inputs, classes = next(iter(dataloaders['train']))
     data_dict = next(iter(dataloaders['train']))

@@ -43,8 +43,6 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
             for dataloader_dict in dataloader[phase]:
                 inputs = dataloader_dict['image']
                 labels = dataloader_dict['label']
-                print('TRAIN - inputs.shape: {}'.format(inputs.shape))
-                print('TRAIN - labels.shape: {}'.format(labels.shape))
                 inputs = inputs.to(device, dtype=torch.float)
                 labels = labels.to(device, dtype=torch.float)
 
@@ -64,7 +62,6 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds ==
                                               torch.argmax(labels.data, 1))
-
             epoch_loss = running_loss / len(datasets[phase])
             epoch_acc = (running_corrects.double() /
                          len(datasets[phase]))

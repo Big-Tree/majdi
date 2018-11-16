@@ -137,25 +137,22 @@ def print_samples(dataloader, block, num_rows, num_cols):
 
 
 # The transforms.ToTensor() messes with the channel ordering and pixel range
+# transforms.toPILImage also removes the single channel ffs!
 class PILToTensor():
     def __call__(self, sample):
-        print('PIL size: {}'.format(sample.size))
         # Convert to numpy
         to_numpy = np.array(sample)
-        print('np.dtype(to_numpy): {}'.format(to_numpy.dtype))
         # Add back in the channel dimesion
         # Annoyingly the transforms removed it
         add_channel = to_numpy
         add_channel.shape = (1, to_numpy.shape[0], to_numpy.shape[1])
         # Convert to tensor
         to_tensor = torch.from_numpy(to_numpy)
-        print('to_tensor.type(): {}'.format(to_tensor.type()))
         return to_tensor
 
 # Had to rewrite this sice transforms.ToTensor expects range 0-255
 class ToTensor(object):
     def __call__(self, sample):
-        print('got here')
         image, label = sample['image'], sample['label']
         # For some reason in the tutoral they swap the calour channel to front
         return {'image': torch.from_numpy(image),
@@ -192,9 +189,7 @@ class MajdiDataset(Dataset):
             # Swap channel order for PIL
             sample['image'].shape = (sample['image'].shape[1],
                                      sample['image'].shape[2], 1)
-            print('0-sample[image].shape: {}'.format(sample['image'].shape))
             sample['image'] = self.transform(sample['image'])
-            print('1-sample[image].shape: {}'.format(sample['image'].shape))
             # Convert labels to tensor (image already converted to tensor)
             sample['label'] = torch.from_numpy(sample['label'])
         else:
