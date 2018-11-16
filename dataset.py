@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
+from torchvision import transforms
 import pydicom
 import random
 import sys
@@ -72,7 +73,8 @@ def load_data_set(split_ratio, device, seed):
         # Split into train, val, test
         datasets[key] = {
             'data': np.asarray(
-                [_['image'] for _ in dataset_mixer][s_p_left[i]:s_p_right[i]]),
+                [_['image'] for _ in dataset_mixer][s_p_left[i]:s_p_right[i]],
+            dtype=np.float32),
             'labels': np.asarray(
                 [_['class'] for _ in dataset_mixer][s_p_left[i]:s_p_right[i]])}
         # Convert to one hot labels
@@ -81,7 +83,11 @@ def load_data_set(split_ratio, device, seed):
         datasets[key]['labels'][range(len(tmp_labels)), tmp_labels] = 1
         # Reshape the images
         tmp = datasets[key]['data'].shape
+        #tmp = [n, H, W]
+        # torchvision.transforms requires [n, H, W, C]
         datasets[key]['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
+        print('datasets[{}][data].shape{}'.format(
+            key,datasets[key]['data'].shape))
 
     # Get max value
     max_pixel = np.amax([np.amax(datasets[key]['data']) for key in datasets])
@@ -96,11 +102,17 @@ def load_data_set(split_ratio, device, seed):
     out = {'train':None,
            'val':None,
            'test':None}
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.RandomRotation(360),
+            PILToTensor()]), # [3, 429, 1]
+        'val': None,
+        'test': None}
     for key in out:
         out[key] = MajdiDataset(datasets[key]['data'],
                              datasets[key]['labels'],
-                             transform=ToTensor())
-
+                             transform = data_transforms[key])
     return out
 
 def print_samples(dataloader, block, num_rows, num_cols):
@@ -123,8 +135,27 @@ def print_samples(dataloader, block, num_rows, num_cols):
     plt.show(block=block)
     #plt.pause(0.001) # Displays the figures I think
 
+
+# The transforms.ToTensor() messes with the channel ordering and pixel range
+class PILToTensor():
+    def __call__(self, sample):
+        print('PIL size: {}'.format(sample.size))
+        # Convert to numpy
+        to_numpy = np.array(sample)
+        print('np.dtype(to_numpy): {}'.format(to_numpy.dtype))
+        # Add back in the channel dimesion
+        # Annoyingly the transforms removed it
+        add_channel = to_numpy
+        add_channel.shape = (1, to_numpy.shape[0], to_numpy.shape[1])
+        # Convert to tensor
+        to_tensor = torch.from_numpy(to_numpy)
+        print('to_tensor.type(): {}'.format(to_tensor.type()))
+        return to_tensor
+
+# Had to rewrite this sice transforms.ToTensor expects range 0-255
 class ToTensor(object):
     def __call__(self, sample):
+        print('got here')
         image, label = sample['image'], sample['label']
         # For some reason in the tutoral they swap the calour channel to front
         return {'image': torch.from_numpy(image),
@@ -157,6 +188,20 @@ class MajdiDataset(Dataset):
         sample = {'image': self.images[idx], 'label': self.labels[idx]}
 
         if self.transform:
-            sample = self.transform(sample)
+            # Perform transforms on images
+            # Swap channel order for PIL
+            sample['image'].shape = (sample['image'].shape[1],
+                                     sample['image'].shape[2], 1)
+            print('0-sample[image].shape: {}'.format(sample['image'].shape))
+            sample['image'] = self.transform(sample['image'])
+            print('1-sample[image].shape: {}'.format(sample['image'].shape))
+            # Convert labels to tensor (image already converted to tensor)
+            sample['label'] = torch.from_numpy(sample['label'])
+        else:
+            # If no transforms we still need to convert to tensor
+            sample['image'] = torch.from_numpy(sample['image'])
+            sample['label'] = torch.from_numpy(sample['label'])
+
+        # Convert to tenors
 
         return sample

@@ -144,7 +144,7 @@ def main():
                                       num_workers=4)
     modes = ['train', 'val', 'test']
 
-    print_samples(dataloaders['train'], block=False, num_rows=2, num_cols=3)
+    print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
     # Print some of the images
     #inputs, classes = next(iter(dataloaders['train']))
     data_dict = next(iter(dataloaders['train']))
