@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import copy
+import datetime
 import sys
 sys.path.append('/vol/research/mammo/mammo2/will/python/usefulFunctions')
 import usefulFunctions as uf
@@ -88,6 +89,13 @@ def main():
     DEVICE = torch.device('cuda:2')
     SEED = 7
 
+    now = datetime.datetime.now()
+    tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
+    test_name = 'SGD_Agumentation'
+    SAVE_DIR = tmp + '{}-{}_{}:{}'.format(now.month, now.day, now.hour,
+                                          now.minute) + test_name
+    #SAVE_DIR = None
+
     plt.ion()
     datasets = load_data_set(0.8, DEVICE, SEED)
     print('len(datasets[train]): {}'.format(len(datasets['train'])))
@@ -127,8 +135,8 @@ def main():
     model = model.to(DEVICE) # Enable GPU
 
     # Training options
-    #optimizer = optim.SGD(model.parameters(), lr=0.01)
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.SGD(model.parameters(), lr=0.01)
+    #optimizer = optim.Adam(model.parameters())
     criterion = nn.MSELoss()
     #criterion = nn.CrossEntropyLoss()
     #criterion = nn.NLLLoss()
@@ -142,16 +150,10 @@ def main():
                                       batch_size=BATCH_SIZE,
                                       shuffle=True,
                                       num_workers=4)
-    modes = ['train', 'val', 'test']
 
-    print_samples(dataloaders['train'], block=True, num_rows=4, num_cols=5)
-    # Print some of the images
-    #inputs, classes = next(iter(dataloaders['train']))
-    data_dict = next(iter(dataloaders['train']))
-    inputs = data_dict['image']
-
+    #print_samples(dataloaders['train'], block=True, num_rows=4, num_cols=5)
     train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
-                dataloaders)
+                dataloaders, SAVE_DIR)
 
     # ROC Curve
     phases = ['train', 'val', 'test']
@@ -161,7 +163,7 @@ def main():
     sens = {'train': None, 'val': None, 'test': None}
     spec = {'train': None, 'val': None, 'test': None}
 
-    plt.figure()
+    f = plt.figure()
     plt.title('ROC Curve')
     plt.xlabel('False positive rate')
     plt.ylabel('True positive rate')
@@ -175,6 +177,9 @@ def main():
     plt.grid(True)
     plt.legend()
     print('Running time:', '{:.2f}'.format(time.time() - start_time), ' s')
+    if SAVE_DIR != None:
+        # Save figure
+        uf.save_matplotlib_figure(SAVE_DIR, f, 'svg', 'ROC')
     plt.ioff()
     plt.show()
 

@@ -140,6 +140,7 @@ def print_samples(dataloader, block, num_rows, num_cols):
 # transforms.toPILImage also removes the single channel ffs!
 class PILToTensor():
     def __call__(self, sample):
+        print('    PILToTensor')
         # Convert to numpy
         to_numpy = np.array(sample)
         # Add back in the channel dimesion

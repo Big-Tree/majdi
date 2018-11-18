@@ -2,9 +2,10 @@ import time
 import torch
 import copy
 import matplotlib.pyplot as plt
+import usefulFunctions as uf
 
 def train_model(model, criterion, optimizer, num_epochs, device, datasets,
-                dataloader, scheduler=None):
+                dataloader, save_dir, scheduler=None):
     start_time = time.time()
     # Figures
     stats = {'losses':{
@@ -104,12 +105,12 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
             plt.ylabel('Accuracy')
             plt.grid(True)
             plt.axvline(x=best_model['epoch'],  linestyle='dashed', color='k')
-            plt.plot(stats['acc']['train'], label='train ({:.2f}'.format(
+            plt.plot(stats['acc']['train'], label='train ({:.2f})'.format(
                 best_model['train_acc']))
-            plt.plot(stats['acc']['test'], label='test ({:.2f}'.format(
+            plt.plot(stats['acc']['test'], label='test ({:.2f})'.format(
                 best_model['test_acc']))
-            plt.plot(stats['acc']['val'], label='val ('+'{:.2f}'.format(
-                    best_model['val_acc']) + ')')
+            plt.plot(stats['acc']['val'], label='val ('+'{:.2f})'.format(
+                    best_model['val_acc']))
             plt.legend()
             plt.pause(0.001)
             
@@ -119,6 +120,11 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
 
         print('  Epoch time: {:.2f}s'.format(time.time()-start_epoch_time))
         print()
+    if save_dir != None:
+        # Save figures
+        uf.save_matplotlib_figure(save_dir, f0, 'svg', 'loss')
+        uf.save_matplotlib_figure(save_dir, f1, 'svg', 'accuracy')
+
     time_elapsed = time.time() - start_time
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
