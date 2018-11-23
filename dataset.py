@@ -106,9 +106,16 @@ def load_data_set(split_ratio, device, seed):
         'train': transforms.Compose([
             transforms.ToPILImage(),
             transforms.RandomRotation(360),
-            PILToTensor()]), # [3, 429, 1]
-        'val': None,
-        'test': None}
+            PILToTensor(),
+            NoTriangles()]),
+        'val': transforms.Compose([
+            transforms.ToPILImage(),
+            PILToTensor(),
+            NoTriangles()]),
+        'test':transforms.Compose([
+            transforms.ToPILImage(),
+            PILToTensor(),
+            NoTriangles()])}
     for key in out:
         out[key] = MajdiDataset(datasets[key]['data'],
                              datasets[key]['labels'],
@@ -138,6 +145,8 @@ def print_samples(dataloader, block, num_rows, num_cols):
 
 # The transforms.ToTensor() messes with the channel ordering and pixel range
 # transforms.toPILImage also removes the single channel ffs!
+# PIL format [x,y,c]
+# Torch format [c,x,y]
 class PILToTensor():
     def __call__(self, sample):
         print('    PILToTensor')
@@ -151,13 +160,24 @@ class PILToTensor():
         to_tensor = torch.from_numpy(to_numpy)
         return to_tensor
 
-# Had to rewrite this sice transforms.ToTensor expects range 0-255
-class ToTensor(object):
-    def __call__(self, sample):
-        image, label = sample['image'], sample['label']
-        # For some reason in the tutoral they swap the calour channel to front
-        return {'image': torch.from_numpy(image),
-                'label': torch.from_numpy(label)}
+class NumpyToTensor():
+    def __call__(self, x):
+        return torch.from_numpy(x)
+
+# Removes the triangles after the rotation
+# Should work for numpy and maybe tensors
+class NoTriangles():
+    def __call__(self, x):
+        # 0.5^0.5 is the fraction at which we need to reduce the sides
+        # width == height
+        print('x.shape: {}'.format(x.shape))
+        length = x.shape[1]
+        lower = round(length*(1 - 0.5**0.5)/2)
+        upper = round(length * (1 - (1-0.5**0.5)/2))
+        print('length: {}\nlower: {}\nupper: {}'.format(length, lower, upper))
+        x = x[:, lower:upper, lower:upper]
+        print('x.shape: {}'.format(x.shape))
+        return x
 
 # we need 3 datasets:
     #train
@@ -165,7 +185,6 @@ class ToTensor(object):
     #test
 # base class will return three dataset objects
 # in the init the images will be passed
-
 class MajdiDataset(Dataset):
     def __init__(self, images, labels, transform=None):
         self.images = images
@@ -184,6 +203,7 @@ class MajdiDataset(Dataset):
 
     def __getitem__(self, idx):
         sample = {'image': self.images[idx], 'label': self.labels[idx]}
+        print('before: {}'.format(sample['image'].shape))
 
         if self.transform:
             # Perform transforms on images
@@ -199,5 +219,6 @@ class MajdiDataset(Dataset):
             sample['label'] = torch.from_numpy(sample['label'])
 
         # Convert to tenors
+        print('final __getitem__ shape: {}'.format(sample['image'].shape))
 
         return sample

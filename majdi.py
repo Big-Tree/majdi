@@ -23,20 +23,28 @@ from rocCurve import *
 
 
 # Reproducing Majdi's work with his network architecture
+# init with an image to compute correct sizes
 class Net(nn.Module):
-    def __init__(self, verbose=False):
+    def __init__(self, image, verbose=False):
         super(Net, self).__init__()
+        self.device = device
         self.verbose = verbose
         self.save_softmax = False
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
         self.conv1 = nn.Conv2d(1, 32, 2, padding=1)
+        x = self.conv1(x)
         self.conv2 = nn.Conv2d(32, 64, 4, padding=1)
+        x = self.conv2(x)
         self.conv3 = nn.Conv2d(64, 96, 2, padding=1)
+        x = self.conv3(x)
         self.conv4 = nn.Conv2d(96, 128, 2, padding=1)
+        x = self.conv4(x)
         self.conv5 = nn.Conv2d(128, 256, 3, padding=1)
+        x = self.conv5(x)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(256 * 15 * 15, 2)
+        #self.fc1 = nn.Linear(256 * 15 * 15, 2)
+        self.fc1 = nn.Linear(x.shape[1], 2)
 
     def forward(self, x):
         if self.verbose == True: print('forward, x.type: ', x.type())
@@ -91,8 +99,8 @@ def main():
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    test_name = 'SGD_Agumentation'
-    SAVE_DIR = tmp + '{}-{}_{}:{}'.format(now.month, now.day, now.hour,
+    test_name = 'no_triangles'
+    SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
     #SAVE_DIR = None
 
@@ -131,7 +139,7 @@ def main():
         plt.imshow(img_stacked)
         plt.pause(0.001) # Displays the figures I think
 
-    model = Net(verbose=False)
+    model = Net(DEVICE, verbose=True)
     model = model.to(DEVICE) # Enable GPU
 
     # Training options
@@ -149,9 +157,11 @@ def main():
         dataloaders[key] = DataLoader(datasets[key],
                                       batch_size=BATCH_SIZE,
                                       shuffle=True,
-                                      num_workers=4)
+                                      num_workers=1)
 
-    #print_samples(dataloaders['train'], block=True, num_rows=4, num_cols=5)
+    print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
+    print_samples(dataloaders['val'], block=True, num_rows=2, num_cols=3)
+    print_samples(dataloaders['test'], block=True, num_rows=2, num_cols=3)
     train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
                 dataloaders, SAVE_DIR)
 

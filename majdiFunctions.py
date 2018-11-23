@@ -2,6 +2,13 @@ import math
 import numpy as np
 from sklearn import metrics
 
+# Save the training stats as a text file to make it easy to repeat the
+# experiment
+def save_training_stats(directory):
+    text_file = open('training_stats.txt', 'w')
+    text_file.write('something something')
+    text_file.close()
+
 
 # pass the whole dataset and the minibatch size and then use the functions to
 # get minibatches
