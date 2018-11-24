@@ -27,24 +27,26 @@ from rocCurve import *
 class Net(nn.Module):
     def __init__(self, image, verbose=False):
         super(Net, self).__init__()
-        self.device = device
         self.verbose = verbose
         self.save_softmax = False
+        print('Net__init image.shape: {}'.format(image.shape))
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
         self.conv1 = nn.Conv2d(1, 32, 2, padding=1)
-        x = self.conv1(x)
+        x = self.conv1(image)
+        x = F.relu(x)
+        x = F.max_pool2d(x, kernel_size=2, padding=1)
         self.conv2 = nn.Conv2d(32, 64, 4, padding=1)
-        x = self.conv2(x)
+        x = F.max_pool2d(F.relu(self.conv2(x)), kernel_size=2, padding=1)
         self.conv3 = nn.Conv2d(64, 96, 2, padding=1)
-        x = self.conv3(x)
+        x = F.max_pool2d(F.relu(self.conv3(x)), kernel_size=2, padding=1)
         self.conv4 = nn.Conv2d(96, 128, 2, padding=1)
-        x = self.conv4(x)
+        x = F.max_pool2d(F.relu(self.conv4(x)), kernel_size=2, padding=1)
         self.conv5 = nn.Conv2d(128, 256, 3, padding=1)
-        x = self.conv5(x)
-        # an affine operation: y = Wx + b
+        x = F.max_pool2d(F.relu(self.conv5(x)), kernel_size=2, padding=1)
         #self.fc1 = nn.Linear(256 * 15 * 15, 2)
-        self.fc1 = nn.Linear(x.shape[1], 2)
+        self.fc1 = nn.Linear(x.shape[1]*x.shape[2]*x.shape[3], 2)
+        print('Net__init__: {}'.format(x.shape))
 
     def forward(self, x):
         if self.verbose == True: print('forward, x.type: ', x.type())
@@ -139,15 +141,7 @@ def main():
         plt.imshow(img_stacked)
         plt.pause(0.001) # Displays the figures I think
 
-    model = Net(DEVICE, verbose=True)
-    model = model.to(DEVICE) # Enable GPU
 
-    # Training options
-    optimizer = optim.SGD(model.parameters(), lr=0.01)
-    #optimizer = optim.Adam(model.parameters())
-    criterion = nn.MSELoss()
-    #criterion = nn.CrossEntropyLoss()
-    #criterion = nn.NLLLoss()
 
     # Build dataloaders
     dataloaders = {'train':None,
@@ -159,9 +153,23 @@ def main():
                                       shuffle=True,
                                       num_workers=1)
 
-    print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
-    print_samples(dataloaders['val'], block=True, num_rows=2, num_cols=3)
-    print_samples(dataloaders['test'], block=True, num_rows=2, num_cols=3)
+    #print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
+    #print_samples(dataloaders['val'], block=True, num_rows=2, num_cols=3)
+    #print_samples(dataloaders['test'], block=True, num_rows=2, num_cols=3)
+
+    # Pass model single image so that it can calculate the correct shapse
+    # of the layers
+    sample = next(iter(dataloaders['train']))['image']
+    print('sample.shape: {}'.format(sample.shape))
+    model = Net(sample, verbose=True)
+    model = model.to(DEVICE) # Enable GPU
+    # Training options
+    optimizer = optim.SGD(model.parameters(), lr=0.01)
+    #optimizer = optim.Adam(model.parameters())
+    criterion = nn.MSELoss()
+    #criterion = nn.CrossEntropyLoss()
+    #criterion = nn.NLLLoss()
+
     train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
                 dataloaders, SAVE_DIR)
 
