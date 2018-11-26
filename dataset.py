@@ -102,27 +102,27 @@ def load_data_set(split_ratio, device, seed):
     out = {'train':None,
            'val':None,
            'test':None}
+   # data_transforms = {
+   #     'train': transforms.Compose([
+   #         transforms.ToPILImage(),
+   #         transforms.RandomRotation(360),
+   #         PILToTensor()]),
+   #     'val': None,
+   #     'test': None}
     data_transforms = {
         'train': transforms.Compose([
             transforms.ToPILImage(),
             transforms.RandomRotation(360),
-            PILToTensor()]),
-        'val': None,
-        'test': None}
-    #data_transforms = {
-    #    'train': transforms.Compose([
-    #        transforms.ToPILImage(),
-    #        transforms.RandomRotation(360),
-    #        PILToTensor(),
-    #        NoTriangles()]),
-    #    'val': transforms.Compose([
-    #        transforms.ToPILImage(),
-    #        PILToTensor(),
-    #        NoTriangles()]),
-    #    'test':transforms.Compose([
-    #        transforms.ToPILImage(),
-    #        PILToTensor(),
-    #        NoTriangles()])}
+            PILToTensor(),
+            NoTriangles()]),
+        'val': transforms.Compose([
+            transforms.ToPILImage(),
+            PILToTensor(),
+            NoTriangles()]),
+        'test':transforms.Compose([
+            transforms.ToPILImage(),
+            PILToTensor(),
+            NoTriangles()])}
     for key in out:
         out[key] = MajdiDataset(datasets[key]['data'],
                              datasets[key]['labels'],
@@ -171,8 +171,9 @@ class NumpyToTensor():
     def __call__(self, x):
         return torch.from_numpy(x)
 
-# Removes the triangles after the rotation
-# Should work for numpy and maybe tensors
+# Simple crops the image
+# Can be used after a rotation to removed the dreaded triangles
+# Should work for both numpy and tensors
 class NoTriangles():
     def __call__(self, x):
         # 0.5^0.5 is the fraction at which we need to reduce the sides
@@ -186,10 +187,7 @@ class NoTriangles():
         print('x.shape: {}'.format(x.shape))
         return x
 
-# we need 3 datasets:
-    #train
-    #validation
-    #test
+
 # base class will return three dataset objects
 # in the init the images will be passed
 class MajdiDataset(Dataset):

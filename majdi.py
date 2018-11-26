@@ -101,7 +101,7 @@ def main():
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    test_name = 'no_triangles'
+    test_name = 'no_triangles_sgd'
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
     #SAVE_DIR = None
