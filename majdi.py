@@ -95,19 +95,19 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 5 # Really large to force early stopping
+    MAX_EPOCH = 50000 # Really large to force early stopping
     DEVICE = torch.device('cuda:2')
     SEED = 7
     EARLY_STOPPING = 100
-    NUM_RUNS = 3
+    NUM_RUNS = 10
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    test_name = 'noTriangles_adam_earlyStopping'
+    test_name = '(' + str(NUM_RUNS) + ')_aug_noTriangles_adam'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
-    SAVE_DIR = None
+    #SAVE_DIR = None
 
     plt.ion()
     datasets = load_data_set(0.8, DEVICE, SEED)
@@ -174,7 +174,8 @@ def main():
         #criterion = nn.NLLLoss()
 
         train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
-                    dataloaders, SAVE_DIR, EARLY_STOPPING, show_plots=False)
+                    dataloaders, SAVE_DIR, run_num, EARLY_STOPPING,
+                    show_plots=False, save_plots=True)
 
         # Get ROC curve stats
         for phase in stats:
@@ -200,18 +201,8 @@ def main():
     plt.grid(True)
     plt.legend()
 
-    # Display stats for runs
-    # Average stats across runs
-    print('\nAveraging of {:.0f} runs'.format(NUM_RUNS))
-    for phase in stats:
-        print('{}:'.format(phase))
-        for metric in stats_template:
-            average = 0
-            for i in range(len(stats[phase])):
-                average += stats[phase][i][metric]
-            print('    {}: {:.3f}'.format(
-                metric, average/len(stats[phase])))
-
+    # Display and save stats for runs
+    save_results(SAVE_DIR, stats, NUM_RUNS)
 
     running_time = time.time() - start_time
     print('Running time:', '{:.0f}m {:.0f}s'.format(

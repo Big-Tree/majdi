@@ -1,8 +1,49 @@
 import math
 import numpy as np
 from sklearn import metrics
+import os
 
 # Save the training stats as a text file to make it easy to repeat the
+# Writes the results to file
+# prints results to terminal
+def save_results(directory, stats, num_runs):
+    if directory != None:
+        if os.path.exists(directory) == False:
+            os.makedirs(directory)
+
+        # print to file
+        with open(directory + '/results.txt', 'w') as f:
+            print('Averaging of {:.0f} runs'.format(num_runs), file=f)
+            for phase in stats:
+                print('{}:'.format(phase), file=f)
+                for metric in stats[phase][0]:
+                    average = 0
+                    for i in range(len(stats[phase])):
+                        average += stats[phase][i][metric]
+                    print('    {}: {:.3f}'.format(
+                        metric, average/len(stats[phase])), file=f)
+            # Dump the raw results
+            f.write('\n\n\nData dump:\n')
+            for phase in stats:
+                f.write('\n' + phase + ':')
+                for metric in stats[phase][0]:
+                    f.write('\n  ' + metric + ':\n    ')
+                    for i in range(len(stats[phase])):
+                        f.write(str(stats[phase][i][metric]) + ', ')
+
+
+    # print to terminal
+    print('\nAveraging of {:.0f} runs'.format(num_runs))
+    for phase in stats:
+        print('{}:'.format(phase))
+        for metric in stats[phase][0]:
+            average = 0
+            for i in range(len(stats[phase])):
+                average += stats[phase][i][metric]
+            print('    {}: {:.3f}'.format(
+                metric, average/len(stats[phase])))
+
+
 # experiment
 def save_training_stats(directory):
     text_file = open('training_stats.txt', 'w')
@@ -82,3 +123,5 @@ def get_roc_curve(net, data_all, labels_all, optimizer, batch_size):
     fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score)
     auc = metrics.roc_auc_score(y_true, y_score)
     return fpr, tpr, auc
+
+
