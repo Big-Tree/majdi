@@ -95,17 +95,19 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 300000 # Really large to force early stopping
+    MAX_EPOCH = 5 # Really large to force early stopping
     DEVICE = torch.device('cuda:2')
     SEED = 7
     EARLY_STOPPING = 100
+    NUM_RUNS = 3
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     test_name = 'noTriangles_adam_earlyStopping'
+    # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
-    #SAVE_DIR = None
+    SAVE_DIR = None
 
     plt.ion()
     datasets = load_data_set(0.8, DEVICE, SEED)
@@ -128,22 +130,6 @@ def main():
     print('datasets[test][0][label]: {}'.format(
         datasets['test'][0]['label'].shape))
 
-    # Print some of the images
-    if 1 == 2:
-        plt.ion()
-        fig = plt.figure()
-        sample = datasets['train'][0]
-        print('\nsample[image].shape: {}\nsample[label].shape: {}'.format(
-            sample['image'].shape, sample['label'].shape))
-        img_stacked = np.stack((sample['image'],)*3, axis=-1)
-        img_stacked = np.squeeze(img_stacked)
-        img_stacked = (img_stacked + 1)/2
-        print('img_stacked.shape: {}'.format(img_stacked.shape))
-        plt.imshow(img_stacked)
-        plt.pause(0.001) # Displays the figures I think
-
-
-
     # Build dataloaders
     dataloaders = {'train':None,
                   'val':None,
@@ -162,40 +148,74 @@ def main():
     # of the layers
     sample = next(iter(dataloaders['train']))['image']
     print('sample.shape: {}'.format(sample.shape))
-    model = Net(sample, verbose=False)
-    model = model.to(DEVICE) # Enable GPU
-    # Training options
-    #optimizer = optim.SGD(model.parameters(), lr=0.01)
-    optimizer = optim.Adam(model.parameters())
-    criterion = nn.MSELoss()
-    #criterion = nn.CrossEntropyLoss()
-    #criterion = nn.NLLLoss()
+    stats_template = {
+        'auc':[],
+        'sens':[],
+        'spec':[]}
+    roc_template = {
+        'fpr': None,
+        'tpr': None}
+    roc_stats = {
+        'train':[],
+        'val':[],
+        'test':[]}
+    stats = {
+        'train':[],
+        'val':[],
+        'test':[]}
+    for run_num in range(NUM_RUNS):
+        model = Net(sample, verbose=False)
+        model = model.to(DEVICE) # Enable GPU
+        # Training options
+        #optimizer = optim.SGD(model.parameters(), lr=0.01)
+        optimizer = optim.Adam(model.parameters())
+        criterion = nn.MSELoss()
+        #criterion = nn.CrossEntropyLoss()
+        #criterion = nn.NLLLoss()
 
-    train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
-                dataloaders, SAVE_DIR, EARLY_STOPPING)
+        train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
+                    dataloaders, SAVE_DIR, EARLY_STOPPING, show_plots=False)
 
-    # ROC Curve
-    phases = ['train', 'val', 'test']
-    fpr = {'train': None, 'val': None, 'test': None}
-    tpr = {'train': None, 'val': None, 'test': None}
-    auc = {'train': None, 'val': None, 'test': None}
-    sens = {'train': None, 'val': None, 'test': None}
-    spec = {'train': None, 'val': None, 'test': None}
+        # Get ROC curve stats
+        for phase in stats:
+            tmp = dict(stats_template)
+            tmp_roc = dict(roc_template)
+            tmp_roc['fpr'], tmp_roc['tpr'], tmp['auc'], tmp['sens'],\
+                tmp['spec'] = roc_curve(
+                    model, DEVICE, dataloaders[phase])
+            roc_stats[phase].append(tmp_roc)
+            stats[phase].append(tmp)
 
+    # Display ROC curve of first run
     f = plt.figure()
     plt.title('ROC Curve')
     plt.xlabel('False positive rate')
     plt.ylabel('True positive rate')
-    for phase in phases:
-        fpr[phase], tpr[phase], auc[phase], sens[phase], spec[phase] = (
-            roc_curve(model, DEVICE, dataloaders[phase]))
-        plt.plot(fpr[phase], tpr[phase], label=(
+    for phase in stats:
+        plt.plot(roc_stats[phase][0]['fpr'], roc_stats[phase][0]['tpr'], label=(
             '{}: (area = {:.2f} sens = {:.2f} spec = {:.2f})'.format(
-                phase, auc[phase], sens[phase], spec[phase])))
+                phase, stats[phase][0]['auc'], stats[phase][0]['sens'],
+                stats[phase][0]['spec'])))
     plt.plot([0,1],[0,1], linestyle='dashed', color='k')
     plt.grid(True)
     plt.legend()
-    print('Running time:', '{:.2f}'.format(time.time() - start_time), ' s')
+
+    # Display stats for runs
+    # Average stats across runs
+    print('\nAveraging of {:.0f} runs'.format(NUM_RUNS))
+    for phase in stats:
+        print('{}:'.format(phase))
+        for metric in stats_template:
+            average = 0
+            for i in range(len(stats[phase])):
+                average += stats[phase][i][metric]
+            print('    {}: {:.3f}'.format(
+                metric, average/len(stats[phase])))
+
+
+    running_time = time.time() - start_time
+    print('Running time:', '{:.0f}m {:.0f}s'.format(
+        running_time//60, running_time%60))
     if SAVE_DIR != None:
         # Save figure
         uf.save_matplotlib_figure(SAVE_DIR, f, 'svg', 'ROC')

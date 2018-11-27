@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import usefulFunctions as uf
 
 def train_model(model, criterion, optimizer, num_epochs, device, datasets,
-                dataloader, save_dir, early_stopping=99999, scheduler=None):
+                dataloader, save_dir, early_stopping=99999, show_plots=True,
+                scheduler=None):
     start_time = time.time()
     # Figures
     stats = {'losses':{
@@ -24,8 +25,9 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
                   'val_loss':69,
                   'test_acc':0,
                   'test_loss':69}
-    f0 = plt.figure()
-    f1 = plt.figure()
+    if show_plots:
+        f0 = plt.figure()
+        f1 = plt.figure()
     epoch = 0
     while (epoch - best_model['epoch'] < early_stopping and
             epoch < num_epochs):
@@ -83,42 +85,48 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
                 best_model['train_loss'] = last_last_epoch['loss']
                 best_model['model'] = copy.deepcopy(model.state_dict())
                 best_model['epoch'] = epoch
-            # Plot loss
-            plt.figure(f0.number)
-            plt.cla() #Clear axis
-            plt.title('Loss')
-            plt.xlabel('Epochs')
-            plt.ylabel('Loss')
-            plt.grid(True)
-            plt.axvline(x=best_model['epoch'],  linestyle='dashed', color='k')
-            plt.plot(stats['losses']['train'], label='train ({:.2f})'.format(
-                best_model['train_loss']))
-            plt.plot(stats['losses']['test'], label='test ({:.2f})'.format(
-                best_model['test_loss']))
-            plt.plot(stats['losses']['val'], label='val ({:.2f})'.format(
-                best_model['val_loss']))
-            plt.legend()
-            plt.pause(0.001)
-            # Plot accuracy
-            plt.figure(f1.number)
-            plt.cla() #Clear axis
-            plt.title('Accuracy')
-            plt.xlabel('Epochs')
-            plt.ylabel('Accuracy')
-            plt.grid(True)
-            plt.axvline(x=best_model['epoch'],  linestyle='dashed', color='k')
-            plt.plot(stats['acc']['train'], label='train ({:.2f})'.format(
-                best_model['train_acc']))
-            plt.plot(stats['acc']['test'], label='test ({:.2f})'.format(
-                best_model['test_acc']))
-            plt.plot(stats['acc']['val'], label='val ('+'{:.2f})'.format(
-                    best_model['val_acc']))
-            plt.legend()
-            plt.pause(0.001)
+            if show_plots:
+                # Plot loss
+                plt.figure(f0.number)
+                plt.cla() #Clear axis
+                plt.title('Loss')
+                plt.xlabel('Epochs')
+                plt.ylabel('Loss')
+                plt.grid(True)
+                plt.axvline(x=best_model['epoch'],  linestyle='dashed',
+                            color='k')
+                plt.plot(stats['losses']['train'],
+                    label='train ({:.2f})'.format(
+                        best_model['train_loss']))
+                plt.plot(stats['losses']['test'],
+                    label='test ({:.2f})'.format(
+                        best_model['test_loss']))
+                plt.plot(stats['losses']['val'],
+                    label='val ({:.2f})'.format(
+                        best_model['val_loss']))
+                plt.legend()
+                plt.pause(0.001)
+                # Plot accuracy
+                plt.figure(f1.number)
+                plt.cla() #Clear axis
+                plt.title('Accuracy')
+                plt.xlabel('Epochs')
+                plt.ylabel('Accuracy')
+                plt.grid(True)
+                plt.axvline(x=best_model['epoch'],  linestyle='dashed',
+                            color='k')
+                plt.plot(stats['acc']['train'], label='train ({:.2f})'.format(
+                    best_model['train_acc']))
+                plt.plot(stats['acc']['test'], label='test ({:.2f})'.format(
+                    best_model['test_acc']))
+                plt.plot(stats['acc']['val'], label='val ('+'{:.2f})'.format(
+                        best_model['val_acc']))
+                plt.legend()
+                plt.pause(0.001)
 
-            last_last_epoch = dict(last_epoch)
-            last_epoch['acc'] = epoch_acc
-            last_epoch['loss'] = epoch_loss
+                last_last_epoch = dict(last_epoch)
+                last_epoch['acc'] = epoch_acc
+                last_epoch['loss'] = epoch_loss
 
         epoch += 1
         print('  Epoch time: {:.2f}s'.format(time.time()-start_epoch_time))

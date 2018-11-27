@@ -37,7 +37,8 @@ def load_data_set(split_ratio, device, seed):
         print('Loading dicom', key, '...')
         for index, f in enumerate(file_list[key]):
             dicom_images[key].append(pydicom.dcmread(f))
-            print('    ', index, '/', len(file_list[key]))
+            if index % 10 == 0:
+                print('    ', index, '/', len(file_list[key]))
     rgb_images = {'backgrounds':[], 'lesions':[]}
     print('Converting dicom to RGB...')
     for key in rgb_images:
