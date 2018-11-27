@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import usefulFunctions as uf
 
 def train_model(model, criterion, optimizer, num_epochs, device, datasets,
-                dataloader, save_dir, scheduler=None):
+                dataloader, save_dir, early_stopping=99999, scheduler=None):
     start_time = time.time()
     # Figures
     stats = {'losses':{
@@ -26,7 +26,9 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
                   'test_loss':69}
     f0 = plt.figure()
     f1 = plt.figure()
-    for epoch in range(num_epochs):
+    epoch = 0
+    while (epoch - best_model['epoch'] < early_stopping and
+            epoch < num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
         start_epoch_time = time.time()
@@ -113,11 +115,12 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
                     best_model['val_acc']))
             plt.legend()
             plt.pause(0.001)
-            
+
             last_last_epoch = dict(last_epoch)
             last_epoch['acc'] = epoch_acc
             last_epoch['loss'] = epoch_loss
 
+        epoch += 1
         print('  Epoch time: {:.2f}s'.format(time.time()-start_epoch_time))
         print()
     if save_dir != None:

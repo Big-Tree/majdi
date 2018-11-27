@@ -156,7 +156,6 @@ def print_samples(dataloader, block, num_rows, num_cols):
 # Torch format [c,x,y]
 class PILToTensor():
     def __call__(self, sample):
-        print('    PILToTensor')
         # Convert to numpy
         to_numpy = np.array(sample)
         # Add back in the channel dimesion
@@ -178,13 +177,10 @@ class NoTriangles():
     def __call__(self, x):
         # 0.5^0.5 is the fraction at which we need to reduce the sides
         # width == height
-        print('x.shape: {}'.format(x.shape))
         length = x.shape[1]
         lower = round(length*(1 - 0.5**0.5)/2)
         upper = round(length * (1 - (1-0.5**0.5)/2))
-        print('length: {}\nlower: {}\nupper: {}'.format(length, lower, upper))
         x = x[:, lower:upper, lower:upper]
-        print('x.shape: {}'.format(x.shape))
         return x
 
 
@@ -208,7 +204,6 @@ class MajdiDataset(Dataset):
 
     def __getitem__(self, idx):
         sample = {'image': self.images[idx], 'label': self.labels[idx]}
-        print('before: {}'.format(sample['image'].shape))
 
         if self.transform:
             # Perform transforms on images
@@ -223,7 +218,5 @@ class MajdiDataset(Dataset):
             sample['image'] = torch.from_numpy(sample['image'])
             sample['label'] = torch.from_numpy(sample['label'])
 
-        # Convert to tenors
-        print('final __getitem__ shape: {}'.format(sample['image'].shape))
 
         return sample

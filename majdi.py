@@ -95,13 +95,14 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 200
+    MAX_EPOCH = 300000 # Really large to force early stopping
     DEVICE = torch.device('cuda:2')
     SEED = 7
+    EARLY_STOPPING = 100
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    test_name = 'no_triangles_sgd'
+    test_name = 'noTriangles_adam_earlyStopping'
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
     #SAVE_DIR = None
@@ -161,17 +162,17 @@ def main():
     # of the layers
     sample = next(iter(dataloaders['train']))['image']
     print('sample.shape: {}'.format(sample.shape))
-    model = Net(sample, verbose=True)
+    model = Net(sample, verbose=False)
     model = model.to(DEVICE) # Enable GPU
     # Training options
-    optimizer = optim.SGD(model.parameters(), lr=0.01)
-    #optimizer = optim.Adam(model.parameters())
+    #optimizer = optim.SGD(model.parameters(), lr=0.01)
+    optimizer = optim.Adam(model.parameters())
     criterion = nn.MSELoss()
     #criterion = nn.CrossEntropyLoss()
     #criterion = nn.NLLLoss()
 
     train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
-                dataloaders, SAVE_DIR)
+                dataloaders, SAVE_DIR, EARLY_STOPPING)
 
     # ROC Curve
     phases = ['train', 'val', 'test']
