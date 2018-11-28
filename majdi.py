@@ -96,14 +96,14 @@ def main():
     # Globals:
     BATCH_SIZE = 25
     MAX_EPOCH = 50000 # Really large to force early stopping
-    DEVICE = torch.device('cuda:2')
+    DEVICE = torch.device('cuda:3')
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    test_name = '(' + str(NUM_RUNS) + ')_aug_noTriangles_adam'
+    test_name = '(' + str(NUM_RUNS) + ')_noAug_Triangles_adam'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
@@ -138,7 +138,7 @@ def main():
         dataloaders[key] = DataLoader(datasets[key],
                                       batch_size=BATCH_SIZE,
                                       shuffle=True,
-                                      num_workers=1)
+                                      num_workers=5)
 
     #print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
     #print_samples(dataloaders['val'], block=True, num_rows=2, num_cols=3)

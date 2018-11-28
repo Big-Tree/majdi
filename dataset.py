@@ -111,19 +111,9 @@ def load_data_set(split_ratio, device, seed):
    #     'val': None,
    #     'test': None}
     data_transforms = {
-        'train': transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.RandomRotation(360),
-            PILToTensor(),
-            NoTriangles()]),
-        'val': transforms.Compose([
-            transforms.ToPILImage(),
-            PILToTensor(),
-            NoTriangles()]),
-        'test':transforms.Compose([
-            transforms.ToPILImage(),
-            PILToTensor(),
-            NoTriangles()])}
+        'train': None,
+        'val': None,
+        'test':None}
     for key in out:
         out[key] = MajdiDataset(datasets[key]['data'],
                              datasets[key]['labels'],
