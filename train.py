@@ -26,6 +26,8 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
                   'test_acc':0,
                   'test_loss':69}
     if save_plots or show_plots:
+        if show_plots:
+            plt.ion()
         f0 = plt.figure()
         f1 = plt.figure()
     epoch = 0
