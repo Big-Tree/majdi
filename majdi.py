@@ -30,11 +30,11 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 10 # Really large to force early stopping
+    MAX_EPOCH = 100000 # Really large to force early stopping
     DEVICE = torch.device('cuda:0')
     SEED = 7
     EARLY_STOPPING = 100
-    NUM_RUNS = 2
+    NUM_RUNS = 10
     SAVE_PLOTS = True
     SHOW_PLOTS = False
 
@@ -202,8 +202,9 @@ def main():
     running_time = time.time() - start_time
     print('Running time:', '{:.0f}m {:.0f}s'.format(
         running_time//60, running_time%60))
-    plt.ioff()
-    plt.show()
+    if SHOW_PLOTS:
+        plt.ioff()
+        plt.show()
 
 
 if __name__ == '__main__':
