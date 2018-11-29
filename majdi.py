@@ -31,7 +31,7 @@ def main():
     # Globals:
     BATCH_SIZE = 25
     MAX_EPOCH = 100000 # Really large to force early stopping
-    DEVICE = torch.device('cuda:1')
+    DEVICE = torch.device('cuda:2')
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
@@ -117,8 +117,8 @@ def main():
         model = MajdiNet(sample, verbose=False)
         model = model.to(DEVICE) # Enable GPU
         # Training options
-        optimizer = optim.SGD(model.parameters(), lr=0.01)
-        #optimizer = optim.Adam(model.parameters())
+        #optimizer = optim.SGD(model.parameters(), lr=0.01)
+        optimizer = optim.Adam(model.parameters())
         criterion = nn.MSELoss()
         #criterion = nn.CrossEntropyLoss()
         #criterion = nn.NLLLoss()
