@@ -31,7 +31,7 @@ def main():
     # Globals:
     BATCH_SIZE = 25
     MAX_EPOCH = 100000 # Really large to force early stopping
-    DEVICE = torch.device('cuda:0')
+    DEVICE = torch.device('cuda:1')
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
