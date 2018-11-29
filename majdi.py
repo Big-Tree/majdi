@@ -40,7 +40,7 @@ def main():
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    test_name = '(' + str(NUM_RUNS) + ')_aug_noTriangles_adam'
+    test_name = '(' + str(NUM_RUNS) + ')_aug_tri_adam'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
