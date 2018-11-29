@@ -30,7 +30,7 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 5 # Really large to force early stopping
+    MAX_EPOCH = 10 # Really large to force early stopping
     DEVICE = torch.device('cuda:0')
     SEED = 7
     EARLY_STOPPING = 100
@@ -44,7 +44,7 @@ def main():
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
-    SAVE_DIR = None
+    #SAVE_DIR = None
 
     datasets = load_data_set(0.8, DEVICE, SEED)
     print('len(datasets[train]): {}'.format(len(datasets['train'])))
@@ -84,21 +84,34 @@ def main():
     # of the layers
     sample = next(iter(dataloaders['train']))['image']
     print('sample.shape: {}'.format(sample.shape))
+
+    roc_stats_template = {
+        'train':{
+            'fpr':None,
+            'tpr':None},
+        'val':{
+            'fpr':None,
+            'tpr':None},
+        'test':{
+            'fpr':None,
+            'tpr':None}}
+
     stats_template = {
-        'auc':[],
-        'sens':[],
-        'spec':[]}
-    roc_template = {
-        'fpr': None,
-        'tpr': None}
-    roc_stats = {
-        'train':[],
-        'val':[],
-        'test':[]}
-    stats = {
-        'train':[],
-        'val':[],
-        'test':[]}
+        'train':{
+            'auc':None,
+            'sens':None,
+            'spec':None},
+        'val':{
+            'auc':None,
+            'sens':None,
+            'spec':None},
+        'test':{
+            'auc':None,
+            'sens':None,
+            'spec':None}}
+    roc_stats = []
+    stats = []
+
     run_num = 0
     while run_num < NUM_RUNS:
         model = MajdiNet(sample, verbose=False)
@@ -110,51 +123,63 @@ def main():
         #criterion = nn.CrossEntropyLoss()
         #criterion = nn.NLLLoss()
 
-        train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
-                    dataloaders, SAVE_DIR, run_num, EARLY_STOPPING,
+        model = train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE,
+                    datasets, dataloaders, SAVE_DIR, run_num, EARLY_STOPPING,
                     show_plots=SHOW_PLOTS, save_plots=SAVE_PLOTS)
 
         # Get ROC curve stats
-        for phase in stats:
-            tmp = dict(stats_template)
-            tmp_roc = dict(roc_template)
-            tmp_roc['fpr'], tmp_roc['tpr'], tmp['auc'], tmp['sens'],\
-                tmp['spec'] = roc_curve(
-                    model, DEVICE, dataloaders[phase])
-            roc_stats[phase].append(tmp_roc)
-            stats[phase].append(tmp)
+        tmp_stats = dict(stats_template)
+        tmp_roc = dict(roc_stats_template)
+        print('___stats:\n{}'.format(stats))
+        for phase in stats_template:
+            tmp_roc[phase]['fpr'],\
+            tmp_roc[phase]['tpr'],\
+            tmp_stats[phase]['auc'],\
+            tmp_stats[phase]['sens'],\
+            tmp_stats[phase]['spec'] = roc_curve(
+                model, DEVICE, dataloaders[phase])
+            if phase == 'train':
+                fpr,tpr,auc,sens,spec = roc_curve(model, DEVICE, dataloaders[phase])
+                print('auc: {}\nsens: {}\nspec: {}'.format(auc,sens,spec))
+                print('tmp_stats:\n{}'.format(tmp_stats))
+        print('***stats:\n{}'.format(stats))
+        roc_stats.append(copy.deepcopy(tmp_roc))
+        stats.append(copy.deepcopy(tmp_stats))
+        print('stats:\n{}'.format(stats))
         # Only increment if network converged
-        if stats['train'][-1]['auc'] > 0.8:
+        if stats[-1]['train']['auc'] > 0.8:
             run_num += 1
         else:
             # Did not coverge, delete stats
             print('***DID NOT CONVERGE***')
+            del stats[-1]
+            del roc_stats[-1]
 
     # Loop through and save all ROC curves
-    for i in range(len(roc_stats['train'])):
+    for i in range(len(roc_stats)):
+        print('i: {}'.format(i))
         f = plt.figure()
         plt.title('ROC Curve')
         plt.xlabel('False positive rate')
         plt.ylabel('True positive rate')
-        for phase in roc_stats:
+        for phase in roc_stats_template:
             plt.plot(
-                roc_stats[phase][i]['fpr'],
-                roc_stats[phase][i]['tpr'],
+                roc_stats[i][phase]['fpr'],
+                roc_stats[i][phase]['tpr'],
                 label=('{}: (area = {:.2f} sens = {:.2f} spec = {:.2f})'.format(
                     phase,
-                    stats[phase][i]['auc'],
-                    stats[phase][i]['sens'],
-                    stats[phase][i]['spec'])))
+                    stats[i][phase]['auc'],
+                    stats[i][phase]['sens'],
+                    stats[i][phase]['spec'])))
         plt.plot([0,1],[0,1], linestyle='dashed', color='k')
         plt.grid(True)
         plt.legend()
         if SAVE_DIR != None:
             uf.save_matplotlib_figure(
-                SAVE_DIR, f, 'svg', '(' + str(i) + ')ROC_curve')
+                SAVE_DIR, f, 'svg', '(' + str(i) + ')ROC')
         if SHOW_PLOTS:
             plt.ion()
             plt.pause(0.001)
-
 
 
    # # Display ROC curve of first run
@@ -177,9 +202,6 @@ def main():
     running_time = time.time() - start_time
     print('Running time:', '{:.0f}m {:.0f}s'.format(
         running_time//60, running_time%60))
-    if SAVE_DIR != None:
-        # Save figure
-        uf.save_matplotlib_figure(SAVE_DIR, f, 'svg', 'ROC')
     plt.ioff()
     plt.show()
 

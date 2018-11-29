@@ -14,34 +14,44 @@ def save_results(directory, stats, num_runs):
         # print to file
         with open(directory + '/results.txt', 'w') as f:
             print('Averaging of {:.0f} runs'.format(num_runs), file=f)
-            for phase in stats:
+            for phase in stats[0]:
                 print('{}:'.format(phase), file=f)
-                for metric in stats[phase][0]:
+                for metric in stats[0][phase]:
                     average = 0
-                    for i in range(len(stats[phase])):
-                        average += stats[phase][i][metric]
+                    for i in range(len(stats)):
+                        average += stats[i][phase][metric]
                     print('    {}: {:.3f}'.format(
-                        metric, average/len(stats[phase])), file=f)
+                        metric, average/len(stats)), file=f)
             # Dump the raw results
             f.write('\n\n\nData dump:\n')
-            for phase in stats:
+            for phase in stats[0]:
                 f.write('\n' + phase + ':')
-                for metric in stats[phase][0]:
+                for metric in stats[0][phase]:
                     f.write('\n  ' + metric + ':\n    ')
-                    for i in range(len(stats[phase])):
-                        f.write(str(stats[phase][i][metric]) + ', ')
+                    for i in range(len(stats)):
+                        f.write(str(stats[i][phase][metric]) + ', ')
+
+   # # print to terminal
+   # print('\nAveraging of {:.0f} runs'.format(num_runs))
+   # for phase in stats[0]:
+   #     for metric in stats[0][phase]:
+   #         average = 0
+   #         for i in range(len(stats)):
+   #             average += stats[i][phase][metric]
+   #         print('    {}: {:.3f}'.format(
+   #             metric, average/len(stats)))
 
 
     # print to terminal
     print('\nAveraging of {:.0f} runs'.format(num_runs))
-    for phase in stats:
+    for phase in stats[0]:
         print('{}:'.format(phase))
-        for metric in stats[phase][0]:
+        for metric in stats[0][phase]:
             average = 0
-            for i in range(len(stats[phase])):
-                average += stats[phase][i][metric]
+            for i in range(len(stats)):
+                average += stats[i][phase][metric]
             print('    {}: {:.3f}'.format(
-                metric, average/len(stats[phase])))
+                metric, average/len(stats)))
 
 
 # experiment
