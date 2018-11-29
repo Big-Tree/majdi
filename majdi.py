@@ -117,8 +117,8 @@ def main():
         model = MajdiNet(sample, verbose=False)
         model = model.to(DEVICE) # Enable GPU
         # Training options
-        #optimizer = optim.SGD(model.parameters(), lr=0.01)
-        optimizer = optim.Adam(model.parameters())
+        optimizer = optim.SGD(model.parameters(), lr=0.01)
+        #optimizer = optim.Adam(model.parameters())
         criterion = nn.MSELoss()
         #criterion = nn.CrossEntropyLoss()
         #criterion = nn.NLLLoss()
