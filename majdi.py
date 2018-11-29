@@ -30,11 +30,13 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 50000 # Really large to force early stopping
+    MAX_EPOCH = 5 # Really large to force early stopping
     DEVICE = torch.device('cuda:0')
     SEED = 7
     EARLY_STOPPING = 100
-    NUM_RUNS = 1
+    NUM_RUNS = 2
+    SAVE_PLOTS = True
+    SHOW_PLOTS = False
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
@@ -97,7 +99,8 @@ def main():
         'train':[],
         'val':[],
         'test':[]}
-    for run_num in range(NUM_RUNS):
+    run_num = 0
+    while run_num < NUM_RUNS:
         model = MajdiNet(sample, verbose=False)
         model = model.to(DEVICE) # Enable GPU
         # Training options
@@ -109,7 +112,7 @@ def main():
 
         train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE, datasets,
                     dataloaders, SAVE_DIR, run_num, EARLY_STOPPING,
-                    show_plots=True, save_plots=False)
+                    show_plots=SHOW_PLOTS, save_plots=SAVE_PLOTS)
 
         # Get ROC curve stats
         for phase in stats:
@@ -120,20 +123,53 @@ def main():
                     model, DEVICE, dataloaders[phase])
             roc_stats[phase].append(tmp_roc)
             stats[phase].append(tmp)
+        # Only increment if network converged
+        if stats['train'][-1]['auc'] > 0.8:
+            run_num += 1
+        else:
+            # Did not coverge, delete stats
+            print('***DID NOT CONVERGE***')
 
-    # Display ROC curve of first run
-    f = plt.figure()
-    plt.title('ROC Curve')
-    plt.xlabel('False positive rate')
-    plt.ylabel('True positive rate')
-    for phase in stats:
-        plt.plot(roc_stats[phase][0]['fpr'], roc_stats[phase][0]['tpr'], label=(
-            '{}: (area = {:.2f} sens = {:.2f} spec = {:.2f})'.format(
-                phase, stats[phase][0]['auc'], stats[phase][0]['sens'],
-                stats[phase][0]['spec'])))
-    plt.plot([0,1],[0,1], linestyle='dashed', color='k')
-    plt.grid(True)
-    plt.legend()
+    # Loop through and save all ROC curves
+    for i in range(len(roc_stats['train'])):
+        f = plt.figure()
+        plt.title('ROC Curve')
+        plt.xlabel('False positive rate')
+        plt.ylabel('True positive rate')
+        for phase in roc_stats:
+            plt.plot(
+                roc_stats[phase][i]['fpr'],
+                roc_stats[phase][i]['tpr'],
+                label=('{}: (area = {:.2f} sens = {:.2f} spec = {:.2f})'.format(
+                    phase,
+                    stats[phase][i]['auc'],
+                    stats[phase][i]['sens'],
+                    stats[phase][i]['spec'])))
+        plt.plot([0,1],[0,1], linestyle='dashed', color='k')
+        plt.grid(True)
+        plt.legend()
+        if SAVE_DIR != None:
+            uf.save_matplotlib_figure(
+                SAVE_DIR, f, 'svg', '(' + str(i) + ')ROC_curve')
+        if SHOW_PLOTS:
+            plt.ion()
+            plt.pause(0.001)
+
+
+
+   # # Display ROC curve of first run
+   # f = plt.figure()
+   # plt.title('ROC Curve')
+   # plt.xlabel('False positive rate')
+   # plt.ylabel('True positive rate')
+   # for phase in stats:
+   #     plt.plot(roc_stats[phase][0]['fpr'], roc_stats[phase][0]['tpr'], label=(
+   #         '{}: (area = {:.2f} sens = {:.2f} spec = {:.2f})'.format(
+   #             phase, stats[phase][0]['auc'], stats[phase][0]['sens'],
+   #             stats[phase][0]['spec'])))
+   # plt.plot([0,1],[0,1], linestyle='dashed', color='k')
+   # plt.grid(True)
+   # plt.legend()
 
     # Display and save stats for runs
     save_results(SAVE_DIR, stats, NUM_RUNS)

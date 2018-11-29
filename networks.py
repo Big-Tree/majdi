@@ -5,7 +5,7 @@ from torchvision import models
 
 
 class vgg19Net(nn.Module):
-    def __init__(self)
+    def __init__(self):
         net = torchvision.models.vgg19(pretrained=True)
         # Freeze model
         for param in model_conv.parameters():
