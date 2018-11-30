@@ -32,7 +32,7 @@ def main():
     BATCH_SIZE = 25
     MAX_EPOCH = 100000 # Really large to force early stopping
     DEVICE = torch.device('cuda:0')
-    SEED = 7
+    SEED = None #7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
     SAVE_PLOTS = True
