@@ -32,7 +32,7 @@ def main():
     BATCH_SIZE = 25
     MAX_EPOCH = 100000 # Really large to force early stopping
     DEVICE = torch.device('cuda:0')
-    SEED = 7
+    SEED = None #7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
     SAVE_PLOTS = True
@@ -40,7 +40,7 @@ def main():
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    test_name = '(' + str(NUM_RUNS) + ')_aug_noTri_adam'
+    test_name = '(' + str(NUM_RUNS) + ')_aug_noTri_adam_cross'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
