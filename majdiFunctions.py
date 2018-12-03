@@ -17,11 +17,11 @@ def save_results(directory, stats, num_runs):
             for phase in stats[0]:
                 print('{}:'.format(phase), file=f)
                 for metric in stats[0][phase]:
-                    average = 0
+                    average = np.array([])
                     for i in range(len(stats)):
-                        average += stats[i][phase][metric]
-                    print('    {}: {:.3f}'.format(
-                        metric, average/len(stats)), file=f)
+                        average = np.append(average, stats[i][phase][metric])
+                    print('    {}: {:.3f} ({:.4f})'.format(
+                        metric, np.average(average), np.std(average, ddof=1)), file=f)
             # Dump the raw results
             f.write('\n\n\nData dump:\n')
             for phase in stats[0]:
@@ -47,11 +47,11 @@ def save_results(directory, stats, num_runs):
     for phase in stats[0]:
         print('{}:'.format(phase))
         for metric in stats[0][phase]:
-            average = 0
+            average = np.array([])
             for i in range(len(stats)):
-                average += stats[i][phase][metric]
-            print('    {}: {:.3f}'.format(
-                metric, average/len(stats)))
+                average = np.append(average, stats[i][phase][metric])
+            print('    {}: {:.3f} ({:.4f})'.format(
+                metric, np.average(average), np.std(average, ddof=1)))
 
 
 # experiment
