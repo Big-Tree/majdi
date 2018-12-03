@@ -30,13 +30,13 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 10 # Really large to force early stopping
+    MAX_EPOCH = 100000 # Really large to force early stopping
     DEVICE = torch.device('cuda:0')
     SEED = None
     EARLY_STOPPING = 100
     NUM_RUNS = 3
     SAVE_PLOTS = True
-    SHOW_PLOTS = False
+    SHOW_PLOTS = True
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
@@ -76,7 +76,7 @@ def main():
                                       shuffle=True,
                                       num_workers=1)
 
-    #print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
+    print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
     #print_samples(dataloaders['val'], block=True, num_rows=2, num_cols=3)
     #print_samples(dataloaders['test'], block=True, num_rows=2, num_cols=3)
 
@@ -114,7 +114,8 @@ def main():
 
     run_num = 0
     while run_num < NUM_RUNS:
-        model = MajdiNet(sample, verbose=False)
+        #model = MajdiNet(sample, verbose=False)
+        model = vgg19Net()
         model = model.to(DEVICE) # Enable GPU
         # Training options
         #optimizer = optim.SGD(model.parameters(), lr=0.01)

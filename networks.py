@@ -4,14 +4,47 @@ import torch.nn.functional as F
 from torchvision import models
 
 
-class vgg19Net(nn.Module):
+class oldVgg19Net(nn.Module):
     def __init__(self):
-        net = torchvision.models.vgg19(pretrained=True)
+        #net = models.vgg19(pretrained=True)
+        net = models.resnet18(pretrained=True)
         # Freeze model
-        for param in model_conv.parameters():
+        for param in net.parameters():
             param.requires_grad = False
         # Add head
-        num_ftrs = model_conv.fc.in_features
+        num_ftrs = net.fc.in_features
+        net.fc = nn.Linear(num_ftrs, 2)
+
+
+def vgg19Net():
+    # Load in the vgg net with its default weights
+    # Somehow change the input
+    # redefine the final classifier
+    # how does the features feed into the classifier
+    # vggNet expects images of size 224X224X3
+
+    model = models.vgg19(pretrained=True)
+    # add conv so that images with a single channel will work
+    first_conv_layer = [nn.Conv2d(1, 3, kernel_size=3, stride=1, padding=1,
+                                  dilation=1, groups=1, bias=True)]
+    first_conv_layer.extend(list(model.features))
+    model.features= nn.Sequential(*first_conv_layer )
+
+    #model = models.resnet18(pretrained=True)
+    # Freeze model
+    for param in model.features.parameters():
+        param.requires_grad = False
+    print('model:\n{}'.format(model))
+
+    # Newly created modules have require_grad=True by default
+    num_features = model.classifier[6].in_features
+    features = list(model.classifier.children())[:-1] # Remove last layer
+    features.extend([nn.Linear(num_features, 2)]) # Add our layer
+    model.classifier = nn.Sequential(*features) # Replace the model classifier
+    print(model)
+
+    return model
+
 
 
 # Reproducing Majdi's work with his network architecture

@@ -38,7 +38,7 @@ def load_data_set(split_ratio, device, seed):
         for index, f in enumerate(file_list[key]):
             dicom_images[key].append(pydicom.dcmread(f))
             if index % 10 == 0:
-                print('    ', index, '/', len(file_list[key]))
+                print('    ', index, '/', len(file_list[key]), end='\r')
     rgb_images = {'backgrounds':[], 'lesions':[]}
     print('Converting dicom to RGB...')
     for key in rgb_images:
@@ -114,16 +114,19 @@ def load_data_set(split_ratio, device, seed):
         'train': transforms.Compose([
             transforms.ToPILImage(),
             transforms.RandomRotation(360),
-            PILToTensor(),
-            NoTriangles()]),
+            transforms.CenterCrop((224,224)),
+            PILToTensor()]),
+            #NoTriangles()]),
         'val': transforms.Compose([
             transforms.ToPILImage(),
-            PILToTensor(),
-            NoTriangles()]),
+            transforms.CenterCrop((224,224)),
+            PILToTensor()]),
+            #NoTriangles()]),
         'test':transforms.Compose([
             transforms.ToPILImage(),
-            PILToTensor(),
-            NoTriangles()])}
+            transforms.CenterCrop((224,224)),
+            PILToTensor()])}
+            #NoTriangles()])}
     for key in out:
         out[key] = MajdiDataset(datasets[key]['data'],
                              datasets[key]['labels'],
@@ -170,6 +173,7 @@ class PILToTensor():
 class NumpyToTensor():
     def __call__(self, x):
         return torch.from_numpy(x)
+
 
 # Simple crops the image
 # Can be used after a rotation to removed the dreaded triangles
