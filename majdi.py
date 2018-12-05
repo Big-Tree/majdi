@@ -39,8 +39,9 @@ def main():
     SHOW_PLOTS = False
 
     now = datetime.datetime.now()
-    tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    test_name = '(' + str(NUM_RUNS) + ')_TL_aug_224_adam'
+    #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
+    tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
+    test_name = '(' + str(NUM_RUNS) + ')_TL_aug_224_adam_0-1_singleLayer'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name

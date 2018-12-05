@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from sklearn import metrics
+from scipy import stats
 import os
 
 # Save the training stats as a text file to make it easy to repeat the
@@ -20,8 +21,9 @@ def save_results(directory, stats, num_runs):
                     average = np.array([])
                     for i in range(len(stats)):
                         average = np.append(average, stats[i][phase][metric])
+                    # print average and standard error of the mean
                     print('    {}: {:.3f} ({:.4f})'.format(
-                        metric, np.average(average), np.std(average, ddof=1)), file=f)
+                        metric, np.average(average), stats.sem(average)), file=f)
             # Dump the raw results
             f.write('\n\n\nData dump:\n')
             for phase in stats[0]:
@@ -50,8 +52,9 @@ def save_results(directory, stats, num_runs):
             average = np.array([])
             for i in range(len(stats)):
                 average = np.append(average, stats[i][phase][metric])
+            # print average and standard error of the mean
             print('    {}: {:.3f} ({:.4f})'.format(
-                metric, np.average(average), np.std(average, ddof=1)))
+                metric, np.average(average), stats.sem(average)))
 
 
 # experiment

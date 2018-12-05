@@ -39,7 +39,10 @@ def vgg19Net():
     # Newly created modules have require_grad=True by default
     num_features = model.classifier[6].in_features
     features = list(model.classifier.children())[:-1] # Remove last layer
-    features.extend([nn.Linear(num_features, 2)]) # Add our layer
+    # Freeze classifier
+    for param in model.classifier.parameters():
+        param.requires_grad = False
+    features.extend([nn.Linear(num_features, 2)]) # Add our layer (grads=true)
     model.classifier = nn.Sequential(*features) # Replace the model classifier
     print(model)
 

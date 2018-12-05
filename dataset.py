@@ -93,9 +93,9 @@ def load_data_set(split_ratio, device, seed):
     # Get max value
     max_pixel = np.amax([np.amax(datasets[key]['data']) for key in datasets])
     print('Max pixel: ', max_pixel)
-    # Normalise between -1 and 1
+    # Normalise between 0 and 1
     for key in datasets:
-        datasets[key]['data'] = datasets[key]['data']/max_pixel*2 - 1
+        datasets[key]['data'] = datasets[key]['data']/max_pixel*1 -0 #*2 - 1
         print('min {}: {}'.format(key, np.amin(datasets[key]['data'])))
         print('max {}: {}'.format(key, np.amax(datasets[key]['data'])))
 
