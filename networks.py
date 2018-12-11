@@ -15,8 +15,49 @@ class oldVgg19Net(nn.Module):
         num_ftrs = net.fc.in_features
         net.fc = nn.Linear(num_ftrs, 2)
 
-
 def vgg19Net():
+    model = models.vgg19(pretrained=True)
+    # add conv so that images with a single channel will work
+    first_conv_layer = [nn.Conv2d(1, 3, kernel_size=3, stride=1, padding=1,
+                                  dilation=1, groups=1, bias=True)]
+    first_conv_layer.extend(list(model.features))
+    model.features= nn.Sequential(*first_conv_layer )
+
+    # Freeze model
+    for param in model.features.parameters():
+        param.requires_grad = False
+        print('features.parameters.requires_grad: {}'.format(
+            param.requires_grad))
+    print('model:\n{}'.format(model))
+
+    # Newly created modules have require_grad=True by default
+    #num_features = model.classifier[0].in_features
+    num_features = 86528
+    num_layers = len(list(model.classifier.children()))
+    print('num_layers:{}'.format(num_layers))
+    print('num_features:{}'.format(num_features))
+    # Remove all layers
+    features = list(
+        model.classifier.children())[:-num_layers]
+    # Freeze classifier
+    for param in model.classifier.parameters():
+        pass
+        #param.requires_grad = False
+    features.extend([nn.Linear(num_features, 2),
+                    nn.Softmax(dim=1)]) # Add our layer (grads=true)
+    #features.extend(F.softmax(x, dim=1)
+    model.classifier = nn.Sequential(*features) # Replace the model classifier
+    model.classifier = nn.Sequential(*[nn.Linear(num_features, 2),
+                                      nn.Softmax(dim=1)])
+    for param in model.classifier.parameters():
+        print('classifier.parameters.requires_grad: {}'.format(
+            param.requires_grad))
+    print(model)
+
+    return model
+
+
+def vgg19NetKaggle():
     # Load in the vgg net with its default weights
     # Somehow change the input
     # redefine the final classifier
@@ -42,7 +83,7 @@ def vgg19Net():
     # Freeze classifier
     for param in model.classifier.parameters():
         param.requires_grad = False
-    features.extend([nn.Linear(num_features, 2)]) # Add our layer (grads=true)
+    features.extend([nn.Linear(num_features, 2), nn.Softmax(dim=1)]) # Add our layer (grads=true)
     model.classifier = nn.Sequential(*features) # Replace the model classifier
     print(model)
 

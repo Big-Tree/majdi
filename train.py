@@ -31,6 +31,7 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
         f0 = plt.figure()
         f1 = plt.figure()
     epoch = 0
+    previous_weights = torch.empty(2, 2).to(device)
     while (epoch - best_model['epoch'] < early_stopping and
             epoch < num_epochs):
         print('({})Epoch {}/{}'.format(run_num, epoch, num_epochs - 1))
@@ -41,6 +42,20 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
         last_epoch = {'acc':0, 'loss':0}
         last_last_epoch = dict(last_epoch)
         for phase in ['train', 'test', 'val']:
+            print('parameters:')
+            for name, param in model.classifier.named_parameters():
+                if epoch != 0:
+                    print(name, param.data)
+                    print(name, param.data)
+                    print('previous_weights.size:{}'.format(
+                        previous_weights.size()))
+                    print('param.data.size:{}'.format(
+                        param.data.size()))
+                    print(previous_weights == param.data)
+                else:
+                    print(name, param.data)
+                previous_weights = param.data
+                break
             if phase == 'train':
                 model.train()
             else:
@@ -58,12 +73,14 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
                 # We only need to track the history in train
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
+                    print('outputs:\n{}'.format(outputs))
                     preds = torch.argmax(outputs, 1)
                     loss = criterion(outputs, labels)
 
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
+                        print('step')
 
                 # stats
                 running_loss += loss.item() * inputs.size(0)

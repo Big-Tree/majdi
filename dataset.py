@@ -5,6 +5,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 import pydicom
 import random
+from sklearn.preprocessing import normalize
 import sys
 sys.path.append('/vol/research/mammo/mammo2/will/python/usefulFunctions')
 import usefulFunctions as uf
@@ -113,19 +114,25 @@ def load_data_set(split_ratio, device, seed):
     data_transforms = {
         'train': transforms.Compose([
             transforms.ToPILImage(),
-            transforms.RandomRotation(360),
-            transforms.CenterCrop((224,224)),
-            PILToTensor()]),
+            #transforms.RandomRotation(360),
+            PILToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224,  0.225])]),
             #NoTriangles()]),
         'val': transforms.Compose([
             transforms.ToPILImage(),
-            transforms.CenterCrop((224,224)),
-            PILToTensor()]),
+            PILToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224,  0.225])]),
             #NoTriangles()]),
         'test':transforms.Compose([
             transforms.ToPILImage(),
-            transforms.CenterCrop((224,224)),
-            PILToTensor()])}
+            PILToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224,  0.225])])}
             #NoTriangles()])}
     for key in out:
         out[key] = MajdiDataset(datasets[key]['data'],
@@ -147,7 +154,10 @@ def print_samples(dataloader, block, num_rows, num_cols):
         #sample = datasets['train'][0]
         img_stacked = np.stack((sample,)*3, axis=-1)
         img_stacked = np.squeeze(img_stacked)
-        img_stacked = (img_stacked + 1)/2
+        # Revert form -1 to 1
+        #img_stacked = (img_stacked + 1)/2
+        img_stacked = ((img_stacked - img_stacked.min())
+                       / (img_stacked.max() - img_stacked.min()))
         plt.imshow(img_stacked)
         plt.title(str(label))
     plt.show(block=block)

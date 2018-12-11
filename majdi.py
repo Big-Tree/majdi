@@ -35,8 +35,8 @@ def main():
     SEED = None
     EARLY_STOPPING = 200
     NUM_RUNS = 10
-    SAVE_PLOTS = True
-    SHOW_PLOTS = False
+    SAVE_PLOTS = False
+    SHOW_PLOTS = True
 
     now = datetime.datetime.now()
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
