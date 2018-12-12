@@ -42,7 +42,7 @@ def main():
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) +
-    ')_TL_aug_fullSize_adam_0-1_fullClassifirer')
+    ')_TL_aug_noTri_adam_0-1_singleLayer')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
@@ -50,6 +50,7 @@ def main():
     #SAVE_DIR = None
 
     datasets = load_data_set(0.8, DEVICE, SEED)
+    print(test_name)
     print('len(datasets[train]): {}'.format(len(datasets['train'])))
     print('len(datasets[val]): {}'.format(len(datasets['val'])))
     print('len(datasets[test]): {}'.format(len(datasets['test'])))
@@ -118,7 +119,8 @@ def main():
     run_num = 0
     while run_num < NUM_RUNS:
         #model = MajdiNet(sample, verbose=False)
-        model = vgg19NetFullClassifier()
+        #model = vgg19NetFullClassifier()
+        model = vgg19NetSingleLayer()
         model = model.to(DEVICE) # Enable GPU
         # Training options
         #optimizer = optim.SGD(model.parameters(), lr=0.01)

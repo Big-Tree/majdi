@@ -58,7 +58,8 @@ def vgg19NetSingleLayer():
 
     # Newly created modules have require_grad=True by default
     #num_features = model.classifier[0].in_features
-    num_features = 86528
+    #num_features = 86528
+    num_features = 41472 # without triangles
     num_layers = len(list(model.classifier.children()))
     # Remove all layers
     features = list(
