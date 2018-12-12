@@ -26,16 +26,12 @@ def vgg19Net():
     # Freeze model
     for param in model.features.parameters():
         param.requires_grad = False
-        print('features.parameters.requires_grad: {}'.format(
             param.requires_grad))
-    print('model:\n{}'.format(model))
 
     # Newly created modules have require_grad=True by default
     #num_features = model.classifier[0].in_features
     num_features = 86528
     num_layers = len(list(model.classifier.children()))
-    print('num_layers:{}'.format(num_layers))
-    print('num_features:{}'.format(num_features))
     # Remove all layers
     features = list(
         model.classifier.children())[:-num_layers]
@@ -49,9 +45,6 @@ def vgg19Net():
     model.classifier = nn.Sequential(*features) # Replace the model classifier
     model.classifier = nn.Sequential(*[nn.Linear(num_features, 2),
                                       nn.Softmax(dim=1)])
-    for param in model.classifier.parameters():
-        print('classifier.parameters.requires_grad: {}'.format(
-            param.requires_grad))
     print(model)
 
     return model

@@ -31,17 +31,18 @@ def main():
     # Globals:
     BATCH_SIZE = 25
     MAX_EPOCH = 100000 # Really large to force early stopping
-    DEVICE = torch.device('cuda:1')
+    DEVICE = torch.device('cuda:0')
     SEED = None
     EARLY_STOPPING = 200
-    NUM_RUNS = 10
-    SAVE_PLOTS = False
-    SHOW_PLOTS = True
+    NUM_RUNS = 20
+    SAVE_PLOTS = True
+    SHOW_PLOTS = False
 
     now = datetime.datetime.now()
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
-    test_name = '(' + str(NUM_RUNS) + ')_TL_aug_224_adam_0-1_singleLayer'
+    test_name = '(' + str(NUM_RUNS) + ')_TL_aug_fullSize_adam_0-1_singleLayer'
+    #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
@@ -120,7 +121,7 @@ def main():
         model = model.to(DEVICE) # Enable GPU
         # Training options
         #optimizer = optim.SGD(model.parameters(), lr=0.01)
-        optimizer = optim.Adam(model.parameters())
+        optimizer = optim.Adam(model.parameters(), lr=0.0001)
         criterion = nn.MSELoss()
         #criterion = nn.CrossEntropyLoss()
         #criterion = nn.NLLLoss()
@@ -132,7 +133,6 @@ def main():
         # Get ROC curve stats
         tmp_stats = dict(stats_template)
         tmp_roc = dict(roc_stats_template)
-        print('___stats:\n{}'.format(stats))
         for phase in stats_template:
             tmp_roc[phase]['fpr'],\
             tmp_roc[phase]['tpr'],\
@@ -140,11 +140,6 @@ def main():
             tmp_stats[phase]['sens'],\
             tmp_stats[phase]['spec'] = roc_curve(
                 model, DEVICE, dataloaders[phase])
-            if phase == 'train':
-                fpr,tpr,auc,sens,spec = roc_curve(model, DEVICE, dataloaders[phase])
-                print('auc: {}\nsens: {}\nspec: {}'.format(auc,sens,spec))
-                print('tmp_stats:\n{}'.format(tmp_stats))
-        print('***stats:\n{}'.format(stats))
         roc_stats.append(copy.deepcopy(tmp_roc))
         stats.append(copy.deepcopy(tmp_stats))
         print('stats:\n{}'.format(stats))
@@ -158,8 +153,8 @@ def main():
             del roc_stats[-1]
 
     # Loop through and save all ROC curves
+    print('Saving ROC curvers to:\n{}'.format(SAVE_DIR))
     for i in range(len(roc_stats)):
-        print('i: {}'.format(i))
         f = plt.figure()
         plt.title('ROC Curve')
         plt.xlabel('False positive rate')

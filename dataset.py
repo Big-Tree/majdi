@@ -114,7 +114,7 @@ def load_data_set(split_ratio, device, seed):
     data_transforms = {
         'train': transforms.Compose([
             transforms.ToPILImage(),
-            #transforms.RandomRotation(360),
+            transforms.RandomRotation(360),
             PILToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
