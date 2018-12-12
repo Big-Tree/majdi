@@ -118,22 +118,22 @@ def load_data_set(split_ratio, device, seed):
             PILToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224,  0.225])]),
-            #NoTriangles()]),
+                std=[0.229, 0.224,  0.225]),
+            NoTriangles()]),
         'val': transforms.Compose([
             transforms.ToPILImage(),
             PILToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224,  0.225])]),
-            #NoTriangles()]),
+                std=[0.229, 0.224,  0.225]),
+            NoTriangles()]),
         'test':transforms.Compose([
             transforms.ToPILImage(),
             PILToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224,  0.225])])}
-            #NoTriangles()])}
+                std=[0.229, 0.224,  0.225]),
+            NoTriangles()])}
     for key in out:
         out[key] = MajdiDataset(datasets[key]['data'],
                              datasets[key]['labels'],

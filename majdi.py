@@ -30,7 +30,7 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 100000 # Really large to force early stopping
+    MAX_EPOCH = 30000 # Really large to force early stopping
     DEVICE = torch.device('cuda:0')
     SEED = None
     EARLY_STOPPING = 200
@@ -41,7 +41,8 @@ def main():
     now = datetime.datetime.now()
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
-    test_name = '(' + str(NUM_RUNS) + ')_TL_aug_fullSize_adam_0-1_singleLayer'
+    test_name = ('(' + str(NUM_RUNS) +
+    ')_TL_aug_fullSize_adam_0-1_fullClassifirer')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
@@ -117,7 +118,7 @@ def main():
     run_num = 0
     while run_num < NUM_RUNS:
         #model = MajdiNet(sample, verbose=False)
-        model = vgg19Net()
+        model = vgg19NetFullClassifier()
         model = model.to(DEVICE) # Enable GPU
         # Training options
         #optimizer = optim.SGD(model.parameters(), lr=0.01)

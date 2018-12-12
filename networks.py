@@ -15,8 +15,9 @@ class oldVgg19Net(nn.Module):
         num_ftrs = net.fc.in_features
         net.fc = nn.Linear(num_ftrs, 2)
 
-def vgg19Net():
+def vgg19NetFullClassifier():
     model = models.vgg19(pretrained=True)
+
     # add conv so that images with a single channel will work
     first_conv_layer = [nn.Conv2d(1, 3, kernel_size=3, stride=1, padding=1,
                                   dilation=1, groups=1, bias=True)]
@@ -26,7 +27,34 @@ def vgg19Net():
     # Freeze model
     for param in model.features.parameters():
         param.requires_grad = False
-            param.requires_grad))
+
+    # Newly created modules have require_grad=True by default
+    #num_features = 86528 # with triangles
+    num_features = 41472 # without triangles
+
+    model.classifier = nn.Sequential(*[nn.Linear(num_features, 4096),
+                                       nn.ReLU(),
+                                       nn.Linear(4096, 4096),
+                                       nn.ReLU(),
+                                       nn.Linear(4096, 2),
+                                      nn.Softmax(dim=1)])
+    print(model)
+
+    return model
+
+
+def vgg19NetSingleLayer():
+    model = models.vgg19(pretrained=True)
+
+    # add conv so that images with a single channel will work
+    first_conv_layer = [nn.Conv2d(1, 3, kernel_size=3, stride=1, padding=1,
+                                  dilation=1, groups=1, bias=True)]
+    first_conv_layer.extend(list(model.features))
+    model.features= nn.Sequential(*first_conv_layer )
+
+    # Freeze model
+    for param in model.features.parameters():
+        param.requires_grad = False
 
     # Newly created modules have require_grad=True by default
     #num_features = model.classifier[0].in_features
