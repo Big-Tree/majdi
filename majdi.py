@@ -30,20 +30,20 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 30000 # Really large to force early stopping
+    MAX_EPOCH = 30 # Really large to force early stopping
     DEVICE = torch.device('cuda:0')
     SEED = None
     EARLY_STOPPING = 200
-    NUM_RUNS = 20
+    NUM_RUNS = 2
     SAVE_PLOTS = True
-    SHOW_PLOTS = False
+    SHOW_PLOTS = True
 
     now = datetime.datetime.now()
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
-    test_name = ('(' + str(NUM_RUNS) +
-    ')_TL_aug_noTri_adam_0-1_fullClassifier')
-    #test_name = 'deleme'
+    #test_name = ('(' + str(NUM_RUNS) +
+    #')_TL_aug_noTri_adam_0-1_fullClassifier')
+    test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
@@ -104,15 +104,18 @@ def main():
         'train':{
             'auc':None,
             'sens':None,
-            'spec':None},
+            'spec':None,
+            'acc':None},
         'val':{
             'auc':None,
             'sens':None,
-            'spec':None},
+            'spec':None,
+            'acc':None},
         'test':{
             'auc':None,
             'sens':None,
-            'spec':None}}
+            'spec':None,
+            'acc':None}}
     roc_stats = []
     stats = []
 
@@ -128,14 +131,18 @@ def main():
         criterion = nn.MSELoss()
         #criterion = nn.CrossEntropyLoss()
         #criterion = nn.NLLLoss()
-
-        model = train_model(model, criterion, optimizer, MAX_EPOCH, DEVICE,
-                    datasets, dataloaders, SAVE_DIR, run_num, EARLY_STOPPING,
-                    show_plots=SHOW_PLOTS, save_plots=SAVE_PLOTS)
-
-        # Get ROC curve stats
         tmp_stats = dict(stats_template)
         tmp_roc = dict(roc_stats_template)
+
+        model,\
+        tmp_stats['train']['acc'],\
+        tmp_stats['val']['acc'],\
+        tmp_stats['test']['acc'] = train_model(
+            model, criterion, optimizer, MAX_EPOCH, DEVICE,
+            datasets, dataloaders, SAVE_DIR, run_num, EARLY_STOPPING,
+            show_plots=SHOW_PLOTS, save_plots=SAVE_PLOTS)
+
+        # Get ROC curve stats
         for phase in stats_template:
             tmp_roc[phase]['fpr'],\
             tmp_roc[phase]['tpr'],\

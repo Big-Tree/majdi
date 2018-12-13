@@ -148,4 +148,7 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
     print('Best val Acc: {:4f}'.format(best_model['val_acc']))
     model.load_state_dict(best_model['model'])
     plt.close('all')
-    return model
+    return (model,
+            best_model['train_acc'],
+            best_model['val_acc'],
+            best_model['test_acc'])
