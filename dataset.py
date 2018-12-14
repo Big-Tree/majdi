@@ -37,14 +37,18 @@ def load_data_set(split_ratio, device, seed):
     for key in file_list:
         print('Loading dicom', key, '...')
         for index, f in enumerate(file_list[key]):
-            dicom_images[key].append(pydicom.dcmread(f))
+            file_name = f.split('/')[-3]
+            dicom_images[key].append({
+                file_name: pydicom.dcmread(f)})
             if index % 10 == 0:
                 print('    ', index, '/', len(file_list[key]), end='\r')
     rgb_images = {'backgrounds':[], 'lesions':[]}
     print('Converting dicom to RGB...')
     for key in rgb_images:
-        for img in dicom_images[key]:
-            rgb_images[key].append(img.pixel_array)
+        for dic in dicom_images[key]:
+            file_name = [_ for _ in dic][0]
+            rgb_images[key].append({
+                file_name: img.pixel_array})
 
     # Split the data into training and val
     # Mix the lesions and backgrounds
@@ -55,9 +59,9 @@ def load_data_set(split_ratio, device, seed):
     print('class 0: {}'.format(next(it)))
     print('class 1: {}'.format(next(it)))
     for index, key in enumerate(rgb_images):
-        for img in rgb_images[key]:
+        for dic in rgb_images[key]:
             dataset_mixer.append({
-                'image': img,
+                'image': dic,
                 'class': index})
     if seed != None:
         random.seed(seed) # Fix datasets
@@ -72,26 +76,31 @@ def load_data_set(split_ratio, device, seed):
                'val': None,
                'test': None}
     for i, key in enumerate(datasets):
-        # Split into train, val, test
-        datasets[key] = {
-            'data': np.asarray(
-                [_['image'] for _ in dataset_mixer][s_p_left[i]:s_p_right[i]],
-            dtype=np.float32),
-            'labels': np.asarray(
-                [_['class'] for _ in dataset_mixer][s_p_left[i]:s_p_right[i]])}
-        # Convert to one hot labels
-        tmp_labels = datasets[key]['labels']
-        datasets[key]['labels'] = np.zeros((len(tmp_labels), 2))
-        datasets[key]['labels'][range(len(tmp_labels)), tmp_labels] = 1
-        # Reshape the images
-        tmp = datasets[key]['data'].shape
-        #tmp = [n, H, W]
-        # torchvision.transforms requires [n, H, W, C]
-        datasets[key]['data'].shape = (tmp[0], 1, tmp[1], tmp[2])
-        print('datasets[{}][data].shape{}'.format(
-            key,datasets[key]['data'].shape))
+        for file_name in key:
+            # Split into train, val, test
+            datasets[key] = {
+                'data': np.asarray(
+                    [_['image'] for _ in \
+                        dataset_mixer][s_p_left[i]:s_p_right[i]],
+                dtype=np.float32),
+                'labels': np.asarray(
+                    [_['class'] for _ in \
+                        dataset_mixer][s_p_left[i]:s_p_right[i]])}
+            # Convert to one hot labels
+            tmp_labels = datasets[key]['labels']
+            datasets[key]['labels'] = np.zeros((len(tmp_labels), 2))
+            datasets[key]['labels'][range(len(tmp_labels)), tmp_labels] = 1
+            # Reshape the images
+            tmp = datasets[key]['data'][file_name].shape
+            #tmp = [n, H, W]
+            # torchvision.transforms requires [n, H, W, C]
+            datasets[key]['data'][file_name].shape = (
+                tmp[0], 1, tmp[1], tmp[2])
+            print('datasets[{}][data][file_name].shape{}'.format(
+                key,datasets[key]['data'][file_name].shape))
 
     # Get max value
+    #image_array = [list(_.values())[0] for _ in datasets[key]
     max_pixel = np.amax([np.amax(datasets[key]['data']) for key in datasets])
     print('Max pixel: ', max_pixel)
     # Normalise between 0 and 1
