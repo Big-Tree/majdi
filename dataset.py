@@ -45,6 +45,11 @@ def load_data_set(split_ratio, device, seed):
     for key in rgb_images:
         for img in dicom_images[key]:
             rgb_images[key].append(img.pixel_array)
+    # Normalise the images between 0 and 1
+    max_pixel = np.amax([np.amax(rgb_images[_]) for _ in rgb_images])
+    print('max_pixel: {}'.format(max_pixel))
+    for key in rgb_images:
+        rgb_images[key] = rgb_images[key]/max_pixel
 
     # Split the data into training and val
     # Mix the lesions and backgrounds
@@ -91,14 +96,6 @@ def load_data_set(split_ratio, device, seed):
         print('datasets[{}][data].shape{}'.format(
             key,datasets[key]['data'].shape))
 
-    # Get max value
-    max_pixel = np.amax([np.amax(datasets[key]['data']) for key in datasets])
-    print('Max pixel: ', max_pixel)
-    # Normalise between 0 and 1
-    for key in datasets:
-        datasets[key]['data'] = datasets[key]['data']/max_pixel*1 -0 #*2 - 1
-        print('min {}: {}'.format(key, np.amin(datasets[key]['data'])))
-        print('max {}: {}'.format(key, np.amax(datasets[key]['data'])))
 
     # Load the images into the dataset class
     out = {'train':None,
