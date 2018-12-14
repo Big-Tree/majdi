@@ -30,20 +30,20 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 30 # Really large to force early stopping
+    MAX_EPOCH = 30000 # Really large to force early stopping
     DEVICE = torch.device('cuda:0')
     SEED = None
     EARLY_STOPPING = 200
-    NUM_RUNS = 2
+    NUM_RUNS = 20
     SAVE_PLOTS = True
-    SHOW_PLOTS = True
+    SHOW_PLOTS = False
 
     now = datetime.datetime.now()
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
-    #test_name = ('(' + str(NUM_RUNS) +
-    #')_TL_aug_noTri_adam_0-1_fullClassifier')
-    test_name = 'deleme'
+    test_name = ('(' + str(NUM_RUNS) +
+    ')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
+    #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
                                           now.minute) + test_name
@@ -78,7 +78,7 @@ def main():
         dataloaders[key] = DataLoader(datasets[key],
                                       batch_size=BATCH_SIZE,
                                       shuffle=True,
-                                      num_workers=1)
+                                      num_workers=4)
 
     #print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
     #print_samples(dataloaders['val'], block=True, num_rows=2, num_cols=3)

@@ -35,6 +35,12 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
             epoch < num_epochs):
         print('({})Epoch {}/{}'.format(run_num, epoch, num_epochs - 1))
         print('-' * 10)
+        print('best_model["train"]:{}\n\
+              best_model["val"]:{}\n\
+              best_model["test"]:{}'.format(
+                  best_model['train_acc'],
+                  best_model['val_acc'],
+                  best_model['test_acc']))
         start_epoch_time = time.time()
 
         # Each epoch has a training and validation phase
