@@ -35,14 +35,14 @@ def main():
     SEED = None
     EARLY_STOPPING = 200
     NUM_RUNS = 20
-    SAVE_PLOTS = False
-    SHOW_PLOTS = True
+    SAVE_PLOTS = True
+    SHOW_PLOTS = False
 
     now = datetime.datetime.now()
-    #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
+    tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
+    #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) +
-    ')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
+    ')_TL_aug_noTri_adam_0-1_singleLayer_normalise')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
@@ -122,8 +122,8 @@ def main():
     run_num = 0
     while run_num < NUM_RUNS:
         #model = MajdiNet(sample, verbose=False)
-        model = vgg19NetFullClassifier()
-        #model = vgg19NetSingleLayer()
+        #model = vgg19NetFullClassifier()
+        model = vgg19NetSingleLayer()
         model = model.to(DEVICE) # Enable GPU
         # Training options
         #optimizer = optim.SGD(model.parameters(), lr=0.01)
