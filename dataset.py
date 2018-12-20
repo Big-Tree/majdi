@@ -224,15 +224,10 @@ class MajdiDataset(Dataset):
         file_name = list(self.images[0].keys())[0]
         print('dataset - image size: {}'.format(
             self.images[0][file_name].shape))
-
-
-        """
-        Args:
-            csv_file (string): Path to the csv file with annotations.
-            root_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
+        file_name = list(self.images[0].keys())[0]
+        self.pil_shape = (self.images[0][file_name].shape[1],
+                          self.images[0][file_name].shape[2],
+                          1)
 
     def __len__(self):
         return self.images.shape[0]
@@ -243,20 +238,17 @@ class MajdiDataset(Dataset):
         sample = {'image': self.images[idx][file_name],
                   'label': self.labels[idx],
                   'file_name': file_name}
-        print('sample["image"].shape: {}'.format(sample['image'].shape))
 
         if self.transform:
             # Perform transforms on images
             # torchvision.transforms requires [n, H, W, C] if from numpy
             # pytorch chanel order: [n, C, H, W]
             # Swap channel order for PIL
-            print('***sample["image"].shape: {}'.format(sample['image'].shape))
             new_shape = (sample['image'].shape[1],
                         sample['image'].shape[2],
                         1)
-            new_shape = (429,429,1)
-            print('new_shape: {}'.format(new_shape))
-            sample['image'].shape = new_shape
+            #new_shape = (429,429,1)
+            sample['image'].shape = self.pil_shape
             sample['image'] = self.transform(sample['image'])
             # Convert labels to tensor (image already converted to tensor)
             sample['label'] = torch.from_numpy(sample['label'])

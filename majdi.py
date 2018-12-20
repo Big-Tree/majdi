@@ -31,12 +31,12 @@ def main():
     # Globals:
     BATCH_SIZE = 25
     MAX_EPOCH = 30000 # Really large to force early stopping
-    DEVICE = torch.device('cuda:0')
+    DEVICE = torch.device('cuda')
     SEED = None
     EARLY_STOPPING = 200
     NUM_RUNS = 20
-    SAVE_PLOTS = True
-    SHOW_PLOTS = False
+    SAVE_PLOTS = False
+    SHOW_PLOTS = True
 
     now = datetime.datetime.now()
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
