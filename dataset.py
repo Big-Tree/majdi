@@ -91,7 +91,6 @@ def load_data_set(split_ratio, device, seed):
     # Set split points for train, val, test
     s_p = round(split_ratio*len(dataset_mixer))
     e_p = len(dataset_mixer)
-    s_p_val_test = round((s_p+e_p)/2) # DELETE
     s_p_left = [0, s_p, round((s_p+e_p)/2)]
     s_p_right = [s_p, round((s_p+e_p)/2), None]
     datasets = {'train': None,
