@@ -17,7 +17,7 @@ import usefulFunctions as uf
 # A split ratio of 0.8 will set 80% of the images for training, 10% for
 # validaiton and 10% for test
 # Class 0 - backgrounds... Class 1 - lesions
-def load_data_set(split_ratio, device, seed):
+def load_data_set(split_ratio, device, seed, i_split=0):
     # Initialise class variables:
     # Load in the dicom files
     # Get file list
@@ -93,22 +93,52 @@ def load_data_set(split_ratio, device, seed):
     e_p = len(dataset_mixer)
     s_p_left = [0, s_p, round((s_p+e_p)/2)]
     s_p_right = [s_p, round((s_p+e_p)/2), None]
+#---------------------------------------------------------------------------
+    # i_split will increment by the number of images in test
+    i_split = (round(split_ratio*len(dataset_mixer)/2)) * i_split
+    split_point = {'train': np.arange(s_p) + i_split,
+                   'val': np.arange(s_p, round((s_p+e_p)/2)) + i_split,
+                   'test': np.arange(round((s_p+e_p)/2), e_p) + i_split}
+    print(split_point)
+
     datasets = {'train': None,
                'val': None,
                'test': None}
-    for i, key in enumerate(datasets):
-        # Split into train, val, test
+    tmp_images = np.asarray([_['image'] for _ in dataset_mixer])
+    tmp_classes = np.asarray([_['class'] for _ in dataset_mixer])
+    print('tmp_images.shape: {}'.format(tmp_images.shape))
+    print('tmp_classes.shape: {}'.format(tmp_classes.shape))
+    for key in datasets:
         datasets[key] = {
-            'data': np.asarray(
-                [_['image'] for _ in \
-                    dataset_mixer][s_p_left[i]:s_p_right[i]]),
-            'labels': np.asarray(
-                [_['class'] for _ in \
-                    dataset_mixer][s_p_left[i]:s_p_right[i]])}
+            'data': np.take(tmp_images,
+                split_point[key]),
+                #mode='wrap'),
+            'labels': np.take(tmp_classes,
+                split_point[key])}#,
+                #mode='wrap')}
+
         # Convert to one hot labels
         tmp_labels = datasets[key]['labels']
         datasets[key]['labels'] = np.zeros((len(tmp_labels), 2))
         datasets[key]['labels'][range(len(tmp_labels)), tmp_labels] = 1
+
+#---------------------------------------------------------------------------
+    #datasets = {'train': None,
+    #           'val': None,
+    #           'test': None}
+    #for i, key in enumerate(datasets):
+    #    # Split into train, val, test
+    #    datasets[key] = {
+    #        'data': np.asarray(
+    #            [_['image'] for _ in \
+    #                dataset_mixer][s_p_left[i]:s_p_right[i]]),
+    #        'labels': np.asarray(
+    #            [_['class'] for _ in \
+    #                dataset_mixer][s_p_left[i]:s_p_right[i]])}
+    #    # Convert to one hot labels
+    #    tmp_labels = datasets[key]['labels']
+    #    datasets[key]['labels'] = np.zeros((len(tmp_labels), 2))
+    #    datasets[key]['labels'][range(len(tmp_labels)), tmp_labels] = 1
 
 
     # Load the images into the dataset class
