@@ -54,21 +54,21 @@ def main():
     print('len(datasets[train]): {}'.format(len(datasets['train'])))
     print('len(datasets[val]): {}'.format(len(datasets['val'])))
     print('len(datasets[test]): {}'.format(len(datasets['test'])))
-    #tmp = datasets['train'][0]['image'].shape
-    #print('tmp: {}'.format(tmp))
-    ##tmp = [_['image'] for _ in datasets['train']
-    #print('datasets[train][0][image].shape: {}'.format(
-    #    datasets['train'][0]['image'].shape))
-    #print('datasets[val][0][image].shape: {}'.format(
-    #    datasets['val'][0]['image'].shape))
-    #print('datasets[test][0][image].shape: {}'.format(
-    #    datasets['test'][0]['image'].shape))
-    #print('datasets[train][0][label]: {}'.format(
-    #    datasets['train'][0]['label'].shape))
-    #print('datasets[val][0][label]: {}'.format(
-    #    datasets['val'][0]['label'].shape))
-    #print('datasets[test][0][label]: {}'.format(
-    #    datasets['test'][0]['label'].shape))
+    tmp = datasets['train'][0]['image'].shape
+    print('tmp: {}'.format(tmp))
+    #tmp = [_['image'] for _ in datasets['train']
+    print('datasets[train][0][image].shape: {}'.format(
+        datasets['train'][0]['image'].shape))
+    print('datasets[val][0][image].shape: {}'.format(
+        datasets['val'][0]['image'].shape))
+    print('datasets[test][0][image].shape: {}'.format(
+        datasets['test'][0]['image'].shape))
+    print('datasets[train][0][label]: {}'.format(
+        datasets['train'][0]['label'].shape))
+    print('datasets[val][0][label]: {}'.format(
+        datasets['val'][0]['label'].shape))
+    print('datasets[test][0][label]: {}'.format(
+        datasets['test'][0]['label'].shape))
 
     # Build dataloaders
     dataloaders = {'train':None,

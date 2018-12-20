@@ -48,7 +48,8 @@ def load_data_set(split_ratio, device, seed):
         for dic in dicom_images[key]:
             for file_name in dic:
                 rgb_images[key].append({
-                    file_name: dic[file_name].pixel_array})
+                    file_name: np.asarray(
+                        dic[file_name].pixel_array, dtype=np.float32)})
 
     # Normalise the images between 0 and 1
     background_images = [list(_.values())[0] for _ in
@@ -64,12 +65,11 @@ def load_data_set(split_ratio, device, seed):
                 dic[file_name] = dic[file_name] / max_pixel
                 #Reshape image
                 tmp_shape = dic[file_name].shape
-                print('tmp_shape: {}'.format(tmp_shape))
-                dic[file_name].shape = (tmp_shape[0],
-                                        tmp_shape[1],
-                                        1)
-                print('post shape: {}'.format(dic[file_name].shape))
+                dic[file_name].shape = (1,
+                                        tmp_shape[0],
+                                        tmp_shape[1])
                 # torchvision.transforms requires [n, H, W, C]
+                # pytorch chanel order: [n, C, H, W]
 
 
     # Split the data into training and val
@@ -215,9 +215,17 @@ class NoTriangles():
 # in the init the images will be passed
 class MajdiDataset(Dataset):
     def __init__(self, images, labels, transform=None):
+        print('creating dataset')
         self.images = images
         self.labels = labels
         self.transform = transform
+        print('self.images.shape: {}'.format(self.images.shape))
+        print('self.labels.shape: {}'.format(self.labels.shape))
+        file_name = list(self.images[0].keys())[0]
+        print('dataset - image size: {}'.format(
+            self.images[0][file_name].shape))
+
+
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -230,13 +238,25 @@ class MajdiDataset(Dataset):
         return self.images.shape[0]
 
     def __getitem__(self, idx):
-        sample = {'image': self.images[idx], 'label': self.labels[idx]}
+        #sample = {'image': self.images[idx], 'label': self.labels[idx]}
+        file_name = list(self.images[idx].keys())[0]
+        sample = {'image': self.images[idx][file_name],
+                  'label': self.labels[idx],
+                  'file_name': file_name}
+        print('sample["image"].shape: {}'.format(sample['image'].shape))
 
         if self.transform:
             # Perform transforms on images
+            # torchvision.transforms requires [n, H, W, C] if from numpy
+            # pytorch chanel order: [n, C, H, W]
             # Swap channel order for PIL
-            sample['image'].shape = (sample['image'].shape[1],
-                                     sample['image'].shape[2], 1)
+            print('***sample["image"].shape: {}'.format(sample['image'].shape))
+            new_shape = (sample['image'].shape[1],
+                        sample['image'].shape[2],
+                        1)
+            new_shape = (429,429,1)
+            print('new_shape: {}'.format(new_shape))
+            sample['image'].shape = new_shape
             sample['image'] = self.transform(sample['image'])
             # Convert labels to tensor (image already converted to tensor)
             sample['label'] = torch.from_numpy(sample['label'])
