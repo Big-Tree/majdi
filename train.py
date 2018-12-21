@@ -56,7 +56,6 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
             for dataloader_dict in dataloader[phase]:
                 inputs = dataloader_dict['image']
                 labels = dataloader_dict['label']
-                #inputs = np.asarray([list(_.values())[0] for _ in inputs])
                 inputs = inputs.to(device, dtype=torch.float)
                 labels = labels.to(device, dtype=torch.float)
 

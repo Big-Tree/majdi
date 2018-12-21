@@ -19,6 +19,7 @@ from dataset import *
 from train import *
 from rocCurve import *
 from networks import *
+from classify import *
 
 
 
@@ -30,13 +31,13 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 30000 # Really large to force early stopping
+    MAX_EPOCH = 1
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 200
-    NUM_RUNS = 20
+    NUM_RUNS = 2
     SAVE_PLOTS = False
-    SHOW_PLOTS = True
+    SHOW_PLOTS = False
 
     now = datetime.datetime.now()
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
@@ -120,6 +121,7 @@ def main():
     stats = []
 
     run_num = 0
+    tmp_classifications = []
     while run_num < NUM_RUNS:
         #model = MajdiNet(sample, verbose=False)
         model = vgg19NetFullClassifier()
@@ -154,13 +156,32 @@ def main():
         stats.append(copy.deepcopy(tmp_stats))
         print('stats:\n{}'.format(stats))
         # Only increment if network converged
-        if stats[-1]['train']['auc'] > 0.8:
+        if stats[-1]['train']['auc'] > 0.2: #!!!!!!!!!!!!!!!!!!!!!!!!!!!! FIX
             run_num += 1
+            # classify test images with model
+            tmp_classifications.append(
+                classify_images(model, dataloaders, DEVICE))
+
+
         else:
             # Did not coverge, delete stats
             print('***DID NOT CONVERGE***')
             del stats[-1]
             del roc_stats[-1]
+
+    #Append all classifications together
+    classifications = {}
+    for class_batch in tmp_classifications:
+        old_keys = np.asarray(list(classifications.keys()))
+        print('old_keys: {}'.format(old_keys))
+        for key in class_batch:
+            if np.sum(key == old_keys) == 0:
+                classifications[key] = class_batch[key]
+            else:
+                print('  ***ERROR*** key: {} already exists'.format(key))
+    print('classifications:\n{}'.format(classifications))
+
+
 
     # Loop through and save all ROC curves
     print('Saving ROC curvers to:\n{}'.format(SAVE_DIR))
