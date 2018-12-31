@@ -6,6 +6,7 @@ from torchvision import transforms
 import pydicom
 import random
 from sklearn.preprocessing import normalize
+from tqdm import tqdm
 import sys
 sys.path.append('/vol/research/mammo/mammo2/will/python/usefulFunctions')
 import usefulFunctions as uf
@@ -36,12 +37,13 @@ def load_data_set(split_ratio, device, seed, i_split=0):
     dicom_images = {'backgrounds':[], 'lesions':[]}
     for key in file_list:
         print('Loading dicom', key, '...')
-        for index, f in enumerate(file_list[key]):
+        for f in tqdm(file_list[key], ascii=True):
+        #for index, f in enumerate(file_list[key]):
             file_name = f.split('/')[-3]
             dicom_images[key].append({
                 file_name: pydicom.dcmread(f)})
-            if index % 10 == 0:
-                print('    ', index, '/', len(file_list[key]), end='\r')
+            #if index % 10 == 0:
+                #print('    ', index, '/', len(file_list[key]), end='\r')
     rgb_images = {'backgrounds':[], 'lesions':[]}
     print('Converting dicom to RGB...')
     for key in rgb_images:
