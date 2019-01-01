@@ -171,6 +171,7 @@ def main():
 
     #Append all classifications together
     classifications = {}
+    num_key_collisions = 0
     for class_batch in tmp_classifications:
         old_keys = np.asarray(list(classifications.keys()))
         print('old_keys: {}'.format(old_keys))
@@ -179,7 +180,36 @@ def main():
                 classifications[key] = class_batch[key]
             else:
                 print('  ***ERROR*** key: {} already exists'.format(key))
+                num_key_collisions += 1
     print('classifications:\n{}'.format(classifications))
+
+    # now that we have the classifications we need to get the stats on the
+    #different contrasts
+    # Calculate the average accuracy and stuff for each contrast
+    # create array of the different contrasts
+    contrasts = {'0.95':[],
+                 '0.97':[],
+                 '0.99':[]}
+    num_normals = 0
+    num_lesions = 0
+    for f in classifications:
+        parse = f.split('_') # contrast held in element 11
+        if parse[11] == '0.95' or parse[11] == '0.97' or parse[11] == '0.99':
+            contrasts[parse[11]].append(classifications[f])
+            num_lesions += 1
+        else:
+            num_normals += 1
+    print('contrasts:\n{}'.format(contrasts))
+    print('num_normals: {}'.format(num_normals))
+    print('num_lesions: {}'.format(num_lesions))
+    print('num_key_collisions: {}'.format(num_key_collisions))
+    print('len(class_batch) :{}'.format(len(class_batch)))
+    print('len(classifications): {}'.format(len(classifications)))
+    # Calculate accuracy for each contrast
+    for key in contrasts:
+        tmp_acc = sum(contrasts[key])/len(contrasts[key])
+        print('{} accuracy: {}'.format(key, tmp_acc))
+
 
 
 
