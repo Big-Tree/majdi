@@ -40,8 +40,8 @@ def main():
     SHOW_PLOTS = False
 
     now = datetime.datetime.now()
-    #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
+    tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
+    #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
     'classify all images')
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
