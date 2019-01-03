@@ -31,19 +31,20 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 10
+    MAX_EPOCH = 100
     DEVICE = torch.device('cuda')
     SEED = 7
-    EARLY_STOPPING = 200
-    NUM_RUNS = 3
-    SAVE_PLOTS = False
-    SHOW_PLOTS = True
+    EARLY_STOPPING = 100
+    NUM_RUNS = 10
+    SAVE_PLOTS = True
+    SHOW_PLOTS = False
 
     now = datetime.datetime.now()
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
-    test_name = ('(' + str(NUM_RUNS) +
-    ')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
+    test_name = ('(' + str(NUM_RUNS) + ')_' +
+    'classify all images')
+    #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
     SAVE_DIR = tmp + '{}-{}_{}:{}_'.format(now.month, now.day, now.hour,
@@ -203,7 +204,7 @@ def main():
     for f in classifications:
         parse = f.split('_') # contrast held in element 11
         if parse[11] == '0.95' or parse[11] == '0.97' or parse[11] == '0.99':
-            contrasts[parse[11]].append(classifications[f])
+            contrasts[parse[11]].append(classifications[f]['class'])
             num_lesions += 1
         else:
             num_normals += 1
