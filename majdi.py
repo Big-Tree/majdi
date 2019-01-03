@@ -31,13 +31,13 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 1
+    MAX_EPOCH = 10
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 200
-    NUM_RUNS = 2
+    NUM_RUNS = 3
     SAVE_PLOTS = False
-    SHOW_PLOTS = False
+    SHOW_PLOTS = True
 
     now = datetime.datetime.now()
     #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
@@ -81,6 +81,7 @@ def main():
                                       shuffle=True,
                                       num_workers=4)
 
+
     #print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
     #print_samples(dataloaders['val'], block=True, num_rows=2, num_cols=3)
     #print_samples(dataloaders['test'], block=True, num_rows=2, num_cols=3)
@@ -123,6 +124,15 @@ def main():
     run_num = 0
     tmp_classifications = []
     while run_num < NUM_RUNS:
+        # so whats going on
+        # 
+        # loader dataset for current run
+        datasets = load_data_set(0.8, DEVICE, SEED, i_split=run_num) # latest 
+        for key in dataloaders:                                      # latest
+            dataloaders[key] = DataLoader(datasets[key],             # latest
+                                          batch_size=BATCH_SIZE,     # latest
+                                          shuffle=True,              # latest
+                                          num_workers=4)             # latest
         #model = MajdiNet(sample, verbose=False)
         model = vgg19NetFullClassifier()
         #model = vgg19NetSingleLayer()
@@ -174,14 +184,12 @@ def main():
     num_key_collisions = 0
     for class_batch in tmp_classifications:
         old_keys = np.asarray(list(classifications.keys()))
-        print('old_keys: {}'.format(old_keys))
         for key in class_batch:
             if np.sum(key == old_keys) == 0:
                 classifications[key] = class_batch[key]
             else:
                 print('  ***ERROR*** key: {} already exists'.format(key))
                 num_key_collisions += 1
-    print('classifications:\n{}'.format(classifications))
 
     # now that we have the classifications we need to get the stats on the
     #different contrasts

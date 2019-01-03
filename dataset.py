@@ -101,7 +101,8 @@ def load_data_set(split_ratio, device, seed, i_split=0):
     split_point = {'train': np.arange(s_p) + i_split,
                    'val': np.arange(s_p, round((s_p+e_p)/2)) + i_split,
                    'test': np.arange(round((s_p+e_p)/2), e_p) + i_split}
-    print(split_point)
+    print('split_point: {}'.format(split_point))
+    print('i_split: {}'.format(i_split))
 
     datasets = {'train': None,
                'val': None,
@@ -113,11 +114,11 @@ def load_data_set(split_ratio, device, seed, i_split=0):
     for key in datasets:
         datasets[key] = {
             'data': np.take(tmp_images,
-                split_point[key]),
-                #mode='wrap'),
+                split_point[key],
+                mode='wrap'),
             'labels': np.take(tmp_classes,
-                split_point[key])}#,
-                #mode='wrap')}
+                split_point[key],
+                mode='wrap')}
 
         # Convert to one hot labels
         tmp_labels = datasets[key]['labels']
