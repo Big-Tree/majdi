@@ -20,6 +20,7 @@ from train import *
 from rocCurve import *
 from networks import *
 from classify import *
+from afc import *
 
 
 
@@ -31,7 +32,7 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 100
+    MAX_EPOCH = 1000
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 100
@@ -40,8 +41,8 @@ def main():
     SHOW_PLOTS = False
 
     now = datetime.datetime.now()
-    #tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
-    tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
+    tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
+    #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
     'classify all images')
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
@@ -167,7 +168,7 @@ def main():
         stats.append(copy.deepcopy(tmp_stats))
         print('stats:\n{}'.format(stats))
         # Only increment if network converged
-        if stats[-1]['train']['auc'] > 0.2: #!!!!!!!!!!!!!!!!!!!!!!!!!!!! FIX
+        if stats[-1]['train']['auc'] > 0.8: #!!!!!!!!!!!!!!!!!!!!!!!!!!!! FIX
             run_num += 1
             # classify test images with model
             tmp_classifications.append(
@@ -196,19 +197,22 @@ def main():
     #different contrasts
     # Calculate the average accuracy and stuff for each contrast
     # create array of the different contrasts
-    contrasts = {'0.95':[],
-                 '0.97':[],
-                 '0.99':[]}
+    contrasts = {'0.95':{},
+                 '0.97':{},
+                 '0.99':{}}
+    normals = {}
     num_normals = 0
     num_lesions = 0
     for f in classifications:
         parse = f.split('_') # contrast held in element 11
         if parse[11] == '0.95' or parse[11] == '0.97' or parse[11] == '0.99':
-            contrasts[parse[11]].append(classifications[f]['class'])
+            #contrasts[parse[11]].append(classifications[f])
+            contrasts[parse[11]][f] = classifications[f]
             num_lesions += 1
         else:
+            normals[f] = classifications[f]
             num_normals += 1
-    print('contrasts:\n{}'.format(contrasts))
+    #print('contrasts:\n{}'.format(contrasts))
     print('num_normals: {}'.format(num_normals))
     print('num_lesions: {}'.format(num_lesions))
     print('num_key_collisions: {}'.format(num_key_collisions))
@@ -216,8 +220,12 @@ def main():
     print('len(classifications): {}'.format(len(classifications)))
     # Calculate accuracy for each contrast
     for key in contrasts:
-        tmp_acc = sum(contrasts[key])/len(contrasts[key])
+        tmp_lesion_class = np.asarray(
+            [contrasts[key][f]['class'] for f in contrasts[key]])
+        tmp_acc = sum(tmp_lesion_class)/len(tmp_lesion_class)
         print('{} accuracy: {}'.format(key, tmp_acc))
+
+    afc(contrasts, normals)
 
 
 
