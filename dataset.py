@@ -97,7 +97,8 @@ def load_data_set(split_ratio, device, seed, i_split=0):
     s_p_right = [s_p, round((s_p+e_p)/2), None]
 #---------------------------------------------------------------------------
     # i_split will increment by the number of images in test
-    i_split = (round(split_ratio*len(dataset_mixer)/2)) * i_split
+    #i_split = (round(split_ratio*len(dataset_mixer)/2)) * i_split # DELETE
+    i_split = (round((1-split_ratio)/2 * i_split * len(dataset_mixer)))
     split_point = {'train': np.arange(s_p) + i_split,
                    'val': np.arange(s_p, round((s_p+e_p)/2)) + i_split,
                    'test': np.arange(round((s_p+e_p)/2), e_p) + i_split}

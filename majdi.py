@@ -32,7 +32,7 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 1000
+    MAX_EPOCH = 50
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 100
@@ -44,7 +44,7 @@ def main():
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
-    'classify all images')
+    'classify all images TEST')
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
@@ -168,7 +168,11 @@ def main():
         stats.append(copy.deepcopy(tmp_stats))
         print('stats:\n{}'.format(stats))
         # Only increment if network converged
-        if stats[-1]['train']['auc'] > 0.8: #!!!!!!!!!!!!!!!!!!!!!!!!!!!! FIX
+        if MAX_EPOCH < 10:
+            re_run_cutoff = 0
+        else:
+            re_run_cutoff = 0.8
+        if stats[-1]['train']['auc'] > re_run_cutoff: #!!!!!!!!!!!!!!! FIX
             run_num += 1
             # classify test images with model
             tmp_classifications.append(
@@ -185,12 +189,13 @@ def main():
     classifications = {}
     num_key_collisions = 0
     for class_batch in tmp_classifications:
-        old_keys = np.asarray(list(classifications.keys()))
-        for key in class_batch:
-            if np.sum(key == old_keys) == 0:
+        added_keys = np.asarray(list(classifications.keys()))
+        for index, key in enumerate(class_batch):
+            if np.sum(key == added_keys) == 0:
                 classifications[key] = class_batch[key]
             else:
-                print('  ***ERROR*** key: {} already exists'.format(key))
+                print('{}  ***ERROR*** key: {} already exists'.format(
+                    index, key))
                 num_key_collisions += 1
 
     # now that we have the classifications we need to get the stats on the
@@ -216,6 +221,10 @@ def main():
     print('num_normals: {}'.format(num_normals))
     print('num_lesions: {}'.format(num_lesions))
     print('num_key_collisions: {}'.format(num_key_collisions))
+    print('num_0.95: {}'.format(len(contrasts['0.95'])))
+    print('num_0.97: {}'.format(len(contrasts['0.97'])))
+    print('num_0.99: {}'.format(len(contrasts['0.99'])))
+    print('len(tmp_classifications): {}'.format(len(tmp_classifications)))
     print('len(class_batch) :{}'.format(len(class_batch)))
     print('len(classifications): {}'.format(len(classifications)))
     # Calculate accuracy for each contrast
