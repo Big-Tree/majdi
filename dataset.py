@@ -90,6 +90,7 @@ def load_data_set(split_ratio, device, seed, i_split=0):
     if seed != None:
         random.seed(seed) # Fix datasets
     random.shuffle(dataset_mixer)
+    random.seed(None)
     # Set split points for train, val, test
     s_p = round(split_ratio*len(dataset_mixer))
     e_p = len(dataset_mixer)
