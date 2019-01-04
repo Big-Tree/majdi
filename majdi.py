@@ -32,10 +32,10 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 50
+    MAX_EPOCH = 50000
     DEVICE = torch.device('cuda')
     SEED = 7
-    EARLY_STOPPING = 100
+    EARLY_STOPPING = 150
     NUM_RUNS = 10
     SAVE_PLOTS = True
     SHOW_PLOTS = False
@@ -219,6 +219,7 @@ def main():
             num_normals += 1
     #print('contrasts:\n{}'.format(contrasts))
     print('num_normals: {}'.format(num_normals))
+    print('len(normals): {}'.format(len(normals)))
     print('num_lesions: {}'.format(num_lesions))
     print('num_key_collisions: {}'.format(num_key_collisions))
     print('num_0.95: {}'.format(len(contrasts['0.95'])))
