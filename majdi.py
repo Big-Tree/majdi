@@ -32,19 +32,19 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 1
+    MAX_EPOCH = 100000
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 150
-    NUM_RUNS = 2
-    SAVE_PLOTS = False
+    NUM_RUNS = 10
+    SAVE_PLOTS = True
     SHOW_PLOTS = False
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
-    '4afc_6mm_c')
+    '4afc_6mm_a')
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
