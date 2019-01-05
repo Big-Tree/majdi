@@ -32,7 +32,7 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 100000
+    MAX_EPOCH = 10000
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 150
@@ -44,7 +44,7 @@ def main():
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
-    '4afc_6mm_a')
+    '4afc_4mm_a')
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
@@ -202,15 +202,15 @@ def main():
     #different contrasts
     # Calculate the average accuracy and stuff for each contrast
     # create array of the different contrasts
-    contrasts = {'0.95':{},
-                 '0.97':{},
-                 '0.99':{}}
+    contrasts = {'0.91':{},
+                 '0.93':{},
+                 '0.95':{}}
     normals = {}
     num_normals = 0
     num_lesions = 0
     for f in classifications:
         parse = f.split('_') # contrast held in element 11
-        if parse[11] == '0.95' or parse[11] == '0.97' or parse[11] == '0.99':
+        if parse[11] == '0.91' or parse[11] == '0.93' or parse[11] == '0.95':
             #contrasts[parse[11]].append(classifications[f])
             contrasts[parse[11]][f] = classifications[f]
             num_lesions += 1
@@ -222,9 +222,9 @@ def main():
     print('len(normals): {}'.format(len(normals)))
     print('num_lesions: {}'.format(num_lesions))
     print('num_key_collisions: {}'.format(num_key_collisions))
+    print('num_0.91: {}'.format(len(contrasts['0.91'])))
+    print('num_0.93: {}'.format(len(contrasts['0.93'])))
     print('num_0.95: {}'.format(len(contrasts['0.95'])))
-    print('num_0.97: {}'.format(len(contrasts['0.97'])))
-    print('num_0.99: {}'.format(len(contrasts['0.99'])))
     print('len(tmp_classifications): {}'.format(len(tmp_classifications)))
     print('len(class_batch) :{}'.format(len(class_batch)))
     print('len(classifications): {}'.format(len(classifications)))
