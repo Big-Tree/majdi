@@ -32,10 +32,10 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 10000
+    MAX_EPOCH = 100000
     DEVICE = torch.device('cuda')
     SEED = 7
-    EARLY_STOPPING = 150
+    EARLY_STOPPING = 100
     NUM_RUNS = 10
     SAVE_PLOTS = True
     SHOW_PLOTS = False
@@ -90,8 +90,8 @@ def main():
 
     # Pass model single image so that it can calculate the correct shapse
     # of the layers
-    #sample = next(iter(dataloaders['train']))['image']
-    #print('sample.shape: {}'.format(sample.shape))
+    sample = next(iter(dataloaders['train']))['image']
+    print('sample.shape: {}'.format(sample.shape))
 
     roc_stats_template = {
         'train':{
@@ -135,8 +135,11 @@ def main():
                                           batch_size=BATCH_SIZE,     # latest
                                           shuffle=True,              # latest
                                           num_workers=4)             # latest
-        #model = MajdiNet(sample, verbose=False)
-        model = vgg19NetFullClassifier()
+        # sample is to be an image to init the network size
+        #sample = 
+        model = MajdiNet(sample, verbose=False)
+        #model = vgg19NetFullClassifier()
+
         #model = vgg19NetSingleLayer()
         model = model.to(DEVICE) # Enable GPU
         # Training options
