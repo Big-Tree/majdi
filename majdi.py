@@ -37,8 +37,8 @@ def main():
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
-    SAVE_PLOTS = True
-    SHOW_PLOTS = False
+    SAVE_PLOTS = False
+    SHOW_PLOTS = True
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
@@ -52,7 +52,7 @@ def main():
                                           now.minute) + test_name
     #SAVE_DIR = None
 
-    datasets = load_data_set(0.8, DEVICE, SEED)
+    datasets = load_data_set_pickle(0.8, DEVICE, SEED)
     print(test_name)
     print('len(datasets[train]): {}'.format(len(datasets['train'])))
     print('len(datasets[val]): {}'.format(len(datasets['val'])))
