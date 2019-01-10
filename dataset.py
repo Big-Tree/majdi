@@ -186,6 +186,7 @@ def load_data_set_pickle(split_ratio, device, seed, i_split=0):
     # Load the pickles in to memory
     rgb_images = {'backgrounds':[],
                   'lesions':[]}
+    count = 0
     for key in file_list:
         print('Loading {}...'.format(key))
         for f in tqdm(file_list[key], ascii=True):
@@ -198,7 +199,17 @@ def load_data_set_pickle(split_ratio, device, seed, i_split=0):
                         #print('loaded[img_name].shape: {}'.format(
                         #    loaded[img_name].shape))
                         if loaded[img_name].shape == (256,256,1):
-                            rgb_images[key].append(loaded[img_name])
+                            rgb_images[key].append({str(count):
+                                                    np.asarray(
+                                                        loaded[img_name],
+                                                        dtype=np.float32)})
+                           # print('keys:\
+                           #       {}'.format(rgb_images[key][index].keys()))
+                           # print('index: {}'.format(index))
+                           # print('rgb_images[key][0][str(index)].shape:\
+                           #     {}'.format(
+                           #         rgb_images[key][index][str(index)].shape))
+                            count += 1
                         else:
                             print('***Shape change!***')
                             print('loaded[img_name.shape]: {}'.format(
@@ -206,12 +217,14 @@ def load_data_set_pickle(split_ratio, device, seed, i_split=0):
                 else:
                     for tmp_img in loaded:
                         if tmp_img.shape == (256, 256, 1):
-                            rgb_images[key].append(tmp_img)
+                            rgb_images[key].append({str(count):
+                                                    np.asarray(tmp_img,
+                                                        dtype=np.float32)})
+                            count += 1
                         else:
                             print('***Shape change!***')
                             print('tmp_img.shape: {}'.format(
                                 tmp_img.shape))
-        rgb_images[key] = np.asarray(rgb_images[key], dtype=np.float32)
     # Balance classes
     # Theres more backgrounds
     rgb_images['backgrounds'] = rgb_images['backgrounds'][:len(
@@ -219,11 +232,8 @@ def load_data_set_pickle(split_ratio, device, seed, i_split=0):
 
     print('len(rgb_images[key]): {}'.format(len(rgb_images[key])))
     print('type(rgb_images[key]: {}'.format(type(rgb_images[key])))
-    #tmp = np.asarray(rgb_images[key])
-    #tmp2 = np.asarray(rgb_images[key], dtype=np.float32)
-    #rgb_images[key] = np.asarray(rgb_images[key], dtype=np.float32)
-    first_lesion = rgb_images['lesions'][0]
-    first_normal = rgb_images['backgrounds'][0]
+    first_lesion = list(rgb_images['lesions'][0].values())[0]
+    first_normal = rgb_images['backgrounds'][0]['0']
     print('len(rgb_images["lesions"]): {}'.format(len(rgb_images['lesions'])))
     print('len(rgb_images["backgrounds"]): {}'.format(len(rgb_images['backgrounds'])))
     print('first_lesion.shape: {}'.format(first_lesion.shape))
@@ -231,17 +241,34 @@ def load_data_set_pickle(split_ratio, device, seed, i_split=0):
 
 
     # Normalise the images between 0 and 1
-    max_value = np.asarray(list(rgb_images.values())).max()
+    all_images = []
     for key in rgb_images:
-        rgb_images[key] /= max_value
+        for dic in rgb_images[key]:
+            all_images.append(list(dic.values())[0])
+    max_value = np.asarray(all_images).max()
+    print('max_value: {}'.format(max_value))
+    for key in rgb_images:
+        for index, dic in enumerate(rgb_images[key]):
+            f_name = list(dic.keys())[0]
+            rgb_images[key][index][f_name] /= max_value
+
 
     # Reshape the images
         # torchvision.transforms requires [n, H, W, C]
         # pytorch chanel order: [n, C, H, W]
+    print('Reshaping the images')
     for key in rgb_images:
-        for img in rgb_images[key]:
-            img.shape = (1, img.shape[0], img.shape[1])
+        for index, dic in enumerate(rgb_images[key]):
+            f_name = list(dic.keys())[0]
+            tmp = rgb_images[key][index][f_name]
+            rgb_images[key][index][f_name].shape = (1,
+                                                    tmp.shape[0],
+                                                    tmp.shape[1])
+    # convert rgb_images into an array of images.
+    # Since we don't have the actual file names we'll have to create one
 
+
+#----------------------------------------------------------------------
    # background_images = [list(_.values())[0] for _ in
    #                      rgb_images['backgrounds']]
    # lesion_images = [list(_.values())[0] for _ in rgb_images['lesions']]
@@ -260,7 +287,7 @@ def load_data_set_pickle(split_ratio, device, seed, i_split=0):
    #                                     tmp_shape[1])
    #             # torchvision.transforms requires [n, H, W, C]
    #             # pytorch chanel order: [n, C, H, W]
-
+#----------------------------------------------------------------------
 
     # Split the data into training and val
     # Mix the lesions and backgrounds
@@ -289,7 +316,6 @@ def load_data_set_pickle(split_ratio, device, seed, i_split=0):
     split_point = {'train': np.arange(s_p) + i_split,
                    'val': np.arange(s_p, round((s_p+e_p)/2)) + i_split,
                    'test': np.arange(round((s_p+e_p)/2), e_p) + i_split}
-    print('split_point: {}'.format(split_point))
     print('i_split: {}'.format(i_split))
 
     datasets = {'train': None,
@@ -350,8 +376,8 @@ def load_data_set_pickle(split_ratio, device, seed, i_split=0):
             NoTriangles()])}
     for key in out:
         out[key] = MajdiDataset(datasets[key]['data'],
-                             datasets[key]['labels'],
-                             transform = data_transforms[key])
+                                datasets[key]['labels'],
+                                transform = data_transforms[key])
     return out
 
 def print_samples(dataloader, block, num_rows, num_cols):
@@ -424,9 +450,9 @@ class MajdiDataset(Dataset):
         print('self.images.shape: {}'.format(self.images.shape))
         print('self.labels.shape: {}'.format(self.labels.shape))
         file_name = list(self.images[0].keys())[0]
+        file_name = list(self.images[0].keys())[0]
         print('dataset - image size: {}'.format(
             self.images[0][file_name].shape))
-        file_name = list(self.images[0].keys())[0]
         self.pil_shape = (self.images[0][file_name].shape[1],
                           self.images[0][file_name].shape[2],
                           1)

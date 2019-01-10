@@ -81,7 +81,7 @@ def main():
         dataloaders[key] = DataLoader(datasets[key],
                                       batch_size=BATCH_SIZE,
                                       shuffle=True,
-                                      num_workers=4)
+                                      num_workers=2)
 
 
     #print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
@@ -129,12 +129,12 @@ def main():
         # so whats going on
         # 
         # loader dataset for current run
-        datasets = load_data_set(0.8, DEVICE, SEED, i_split=run_num) # latest 
+        datasets = load_data_set_pickle(0.8, DEVICE, SEED, i_split=run_num) # latest 
         for key in dataloaders:                                      # latest
             dataloaders[key] = DataLoader(datasets[key],             # latest
                                           batch_size=BATCH_SIZE,     # latest
                                           shuffle=True,              # latest
-                                          num_workers=4)             # latest
+                                          num_workers=2)             # latest
         # sample is to be an image to init the network size
         #sample = 
         model = MajdiNet(sample, verbose=False)
