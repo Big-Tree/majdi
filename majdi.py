@@ -32,11 +32,11 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 2
+    MAX_EPOCH = 10000
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 100
-    NUM_RUNS = 2
+    NUM_RUNS = 10
     SAVE_PLOTS = True
     SHOW_PLOTS = False
 
