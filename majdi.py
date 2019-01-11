@@ -35,7 +35,7 @@ def main():
     MAX_EPOCH = 10000
     DEVICE = torch.device('cuda')
     SEED = 7
-    EARLY_STOPPING = 100
+    EARLY_STOPPING = 200
     NUM_RUNS = 10
     SAVE_PLOTS = True
     SHOW_PLOTS = False
@@ -44,7 +44,7 @@ def main():
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
-    '4afc_4mm_a')
+    'real_vgg')
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
@@ -137,8 +137,8 @@ def main():
                                           num_workers=2)             # latest
         # sample is to be an image to init the network size
         #sample = 
-        model = MajdiNet(sample, verbose=False)
-        #model = vgg19NetFullClassifier()
+        #model = MajdiNet(sample, verbose=False)
+        model = vgg19NetFullClassifier()
 
         #model = vgg19NetSingleLayer()
         model = model.to(DEVICE) # Enable GPU
