@@ -32,10 +32,10 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 10000
+    MAX_EPOCH = 100000
     DEVICE = torch.device('cuda')
     SEED = 7
-    EARLY_STOPPING = 200
+    EARLY_STOPPING = 100
     NUM_RUNS = 10
     SAVE_PLOTS = True
     SHOW_PLOTS = False
@@ -44,7 +44,7 @@ def main():
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
-    'real_vgg')
+    'real_vgg_a')
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
@@ -182,6 +182,15 @@ def main():
                 classify_images(model, dataloaders, DEVICE))
 
 
+            for key in tmp_classifications[0]:
+                for k in tmp_classifications[0][key]:
+                    print('key: {} type: {}'.format(
+                        k, type(tmp_classifications[0][key][k])))
+                break
+                
+
+
+
         else:
             # Did not coverge, delete stats
             print('***DID NOT CONVERGE***')
@@ -202,45 +211,74 @@ def main():
                 num_key_collisions += 1
 
 #----------------------------------------------------------------------
+    REAL_IMAGES = True
+    if REAL_IMAGES:
+        lesions = {}
+        normals = {}
+        num_lesions = 0
+        num_normals = 0
+        # classify returns {f_name: 'soft', 'class', 'label'}
+        #pass afc(contrasts and normals) (arrays of the above dictionaries)
+        for f in classifications:
+            if (classifications[f]['label'] == [0, 1]).all(): # Lesion
+                 lesions[f] = classifications[f]
+                 num_lesions += 1
+            else:
+                normals[f] = classifications[f]
+                num_normals += 1
+        print('num_normals: {}'.format(num_normals))
+        print('len(normals): {}'.format(len(normals)))
+        print('num_lesions: {}'.format(num_lesions))
+        print('num_key_collisions: {}'.format(num_key_collisions))
+        print('len(tmp_classifications): {}'.format(len(tmp_classifications)))
+        print('len(class_batch) :{}'.format(len(class_batch)))
+        print('len(classifications): {}'.format(len(classifications)))
+        print('')
+        afc_real(lesions, normals)
 
+
+    else:
     # now that we have the classifications we need to get the stats on the
     #different contrasts
     # Calculate the average accuracy and stuff for each contrast
     # create array of the different contrasts
-   # contrasts = {'0.95':{},
-   #              '0.97':{},
-   #              '0.99':{}}
-   # normals = {}
-   # num_normals = 0
-   # num_lesions = 0
-   # for f in classifications:
-   #     parse = f.split('_') # contrast held in element 11
-   #     if parse[11] == '0.95' or parse[11] == '0.97' or parse[11] == '0.99':
-   #         #contrasts[parse[11]].append(classifications[f])
-   #         contrasts[parse[11]][f] = classifications[f]
-   #         num_lesions += 1
-   #     else:
-   #         normals[f] = classifications[f]
-   #         num_normals += 1
-   # #print('contrasts:\n{}'.format(contrasts))
-   # print('num_normals: {}'.format(num_normals))
-   # print('len(normals): {}'.format(len(normals)))
-   # print('num_lesions: {}'.format(num_lesions))
-   # print('num_key_collisions: {}'.format(num_key_collisions))
-   # print('num_0.95: {}'.format(len(contrasts['0.95'])))
-   # print('num_0.97: {}'.format(len(contrasts['0.97'])))
-   # print('num_0.99: {}'.format(len(contrasts['0.99'])))
-   # print('len(tmp_classifications): {}'.format(len(tmp_classifications)))
-   # print('len(class_batch) :{}'.format(len(class_batch)))
-   # print('len(classifications): {}'.format(len(classifications)))
-   # # Calculate accuracy for each contrast
-   # for key in contrasts:
-   #     tmp_lesion_class = np.asarray(
-   #         [contrasts[key][f]['class'] for f in contrasts[key]])
-   #     tmp_acc = sum(tmp_lesion_class)/len(tmp_lesion_class)
-   #     print('{} accuracy: {}'.format(key, tmp_acc))
-
-   # afc(contrasts, normals)
+        contrasts = {'0.95':{},
+                     '0.97':{},
+                     '0.99':{}}
+        normals = {}
+        num_normals = 0
+        num_lesions = 0
+        for f in classifications:
+            parse = f.split('_') # contrast held in element 11
+            if \
+                    parse[11] == '0.95' or \
+                    parse[11] == '0.97' or \
+                    parse[11] == '0.99':
+                #contrasts[parse[11]].append(classifications[f])
+                contrasts[parse[11]][f] = classifications[f]
+                num_lesions += 1
+            else:
+                normals[f] = classifications[f]
+                num_normals += 1
+        #print('contrasts:\n{}'.format(contrasts))
+        print('num_normals: {}'.format(num_normals))
+        print('len(normals): {}'.format(len(normals)))
+        print('num_lesions: {}'.format(num_lesions))
+        print('num_key_collisions: {}'.format(num_key_collisions))
+        print('num_0.95: {}'.format(len(contrasts['0.95'])))
+        print('num_0.97: {}'.format(len(contrasts['0.97'])))
+        print('num_0.99: {}'.format(len(contrasts['0.99'])))
+        print('len(tmp_classifications): {}'.format(len(tmp_classifications)))
+        print('len(class_batch) :{}'.format(len(class_batch)))
+        print('len(classifications): {}'.format(len(classifications)))
+        # Calculate accuracy for each contrast
+        for key in contrasts:
+            tmp_lesion_class = np.asarray(
+                [contrasts[key][f]['class'] for f in contrasts[key]])
+            tmp_acc = sum(tmp_lesion_class)/len(tmp_lesion_class)
+            print('{} accuracy: {}'.format(key, tmp_acc))
+        
+        afc(contrasts, normals)
 
 #----------------------------------------------------------------------
 

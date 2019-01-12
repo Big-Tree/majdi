@@ -31,6 +31,7 @@ def vgg19NetFullClassifier():
     # Newly created modules have require_grad=True by default
     #num_features = 86528 # with triangles
     num_features = 41472 # without triangles
+    num_features = 12800 # real lesions
 
     model.classifier = nn.Sequential(*[nn.Linear(num_features, 4096),
                                        nn.ReLU(),
