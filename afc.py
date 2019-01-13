@@ -11,19 +11,19 @@ def afc(all_lesions, normals, folds=1):
     # what should be passed?
     # lesion and background softmax values
 
-    #lesions = {'0.91':{name:{class, soft},
-    #             '0.93':{name:{class, soft},
-    #             '0.95':{name:{class, soft}}
+    #lesions = {'0.95':{name:{class, soft},
+    #             '0.97':{name:{class, soft},
+    #             '0.99':{name:{class, soft}}
     # normals = {name}
     all_normals = np.array([normals[f]['soft'] for f in normals])
     all_normals = np.squeeze(all_normals)
     print('all_normals.shape: {}'.format(all_normals.shape))
-    num_correct = {'0.91': 0,
-                   '0.93': 0,
-                   '0.95': 0}
-    num_incorrect = {'0.91': 0,
-                   '0.93': 0,
-                   '0.95': 0}
+    num_correct = {'0.95': 0,
+                   '0.97': 0,
+                   '0.99': 0}
+    num_incorrect = {'0.95': 0,
+                   '0.97': 0,
+                   '0.99': 0}
     print('all_normals: {}'.format(all_normals))
 
     for contrast in all_lesions:
