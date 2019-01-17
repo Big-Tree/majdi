@@ -25,7 +25,7 @@ def afc(all_lesions, normals, folds=1):
                    '0.97': 0,
                    '0.99': 0}
     print('all_normals: {}'.format(all_normals))
-
+    #
     for contrast in all_lesions:
         for f in all_lesions[contrast]:
             lesion = all_lesions[contrast][f]['soft'][1]
