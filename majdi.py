@@ -84,9 +84,9 @@ def main():
                                       num_workers=2)
 
 
-    #print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
-    #print_samples(dataloaders['val'], block=True, num_rows=2, num_cols=3)
-    #print_samples(dataloaders['test'], block=True, num_rows=2, num_cols=3)
+    print_samples(dataloaders['train'], block=True, num_rows=2, num_cols=3)
+    print_samples(dataloaders['val'], block=True, num_rows=2, num_cols=3)
+    print_samples(dataloaders['test'], block=True, num_rows=2, num_cols=3)
 
     # Pass model single image so that it can calculate the correct shapse
     # of the layers

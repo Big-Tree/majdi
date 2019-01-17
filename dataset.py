@@ -178,10 +178,10 @@ def load_data_set_pickle(split_ratio, device, seed, i_split=0):
     file_list = {
         'backgrounds': uf.get_files(
             '/vol/research/mammo/mammo2/will/data/batches/roi',
-            'lesions.pickle'),
+            'contrilaterals.pickle'),
         'lesions': uf.get_files(
             '/vol/research/mammo/mammo2/will/data/batches/roi',
-            'contrilaterals.pickle')}
+            'lesions.pickle')}
     # -------------------Balance the dataset
     # Load the pickles in to memory
     rgb_images = {'backgrounds':[],
