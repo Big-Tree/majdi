@@ -21,6 +21,7 @@ def afc_real(all_lesions, normals, folds=1):
     num_incorrect = 0
 
     for f in all_lesions:
+        #
         lesion = all_lesions[f]['soft'][1]
         # select 1 lesion and three normals
         #random.shuffle(all_normals)
