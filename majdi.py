@@ -37,6 +37,7 @@ def main():
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
+    BALANCE_DATASET = False
     SAVE_PLOTS = True
     SHOW_PLOTS = False
 
@@ -44,7 +45,7 @@ def main():
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
-    'majdi_rerun_6mm_a')
+    'majdi_unbalanced_6mm')
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
@@ -129,7 +130,8 @@ def main():
         # so whats going on
         # 
         # loader dataset for current run
-        datasets = load_data_set(0.8, DEVICE, SEED, i_split=run_num) # latest 
+        datasets = load_data_set(0.8, DEVICE, SEED, i_split=run_num,
+                                 balance_dataset = BALANCE_DATASET) # latest 
         for key in dataloaders:                                      # latest
             dataloaders[key] = DataLoader(datasets[key],             # latest
                                           batch_size=BATCH_SIZE,     # latest
@@ -238,7 +240,7 @@ def main():
         tmp_acc = sum(tmp_lesion_class)/len(tmp_lesion_class)
         print('{} accuracy: {}'.format(key, tmp_acc))
 
-    afc(contrasts, normals)
+    old_afc(contrasts, normals)
 
 
 

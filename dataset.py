@@ -18,7 +18,7 @@ import usefulFunctions as uf
 # A split ratio of 0.8 will set 80% of the images for training, 10% for
 # validaiton and 10% for test
 # Class 0 - backgrounds... Class 1 - lesions
-def load_data_set(split_ratio, device, seed, i_split=0):
+def load_data_set(split_ratio, device, seed, i_split=0, balance_dataset=True):
     # Initialise class variables:
     # Load in the dicom files
     # Get file list
@@ -31,8 +31,13 @@ def load_data_set(split_ratio, device, seed, i_split=0):
             '/vol/research/mammo/mammo2/will/data/prem/2D/6mm',
             '*.dcm')}
     # Balance the dataset
-    file_list['backgrounds'] = file_list['backgrounds'][
-        0 : len(file_list['lesions'])]
+    # Shuffle the file list first so that we get a good spread of backgrounds
+    if seed != None:
+        random.seed(seed)
+    random.shuffle(file_list['backgrounds'])
+    if balance_dataset == True: # disable Balance of dataset
+        file_list['backgrounds'] = file_list['backgrounds'][
+            0 : len(file_list['lesions'])]
     # Load in dicom images to RAM
     dicom_images = {'backgrounds':[], 'lesions':[]}
     for key in file_list:
@@ -103,7 +108,6 @@ def load_data_set(split_ratio, device, seed, i_split=0):
     split_point = {'train': np.arange(s_p) + i_split,
                    'val': np.arange(s_p, round((s_p+e_p)/2)) + i_split,
                    'test': np.arange(round((s_p+e_p)/2), e_p) + i_split}
-    print('split_point: {}'.format(split_point))
     print('i_split: {}'.format(i_split))
 
     datasets = {'train': None,
