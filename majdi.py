@@ -37,7 +37,7 @@ def main():
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
-    BALANCE_DATASET = False
+    BALANCE_DATASET = True
     SAVE_PLOTS = True
     SHOW_PLOTS = False
 

@@ -35,7 +35,7 @@ def load_data_set(split_ratio, device, seed, i_split=0, balance_dataset=True):
     if seed != None:
         random.seed(seed)
     random.shuffle(file_list['backgrounds'])
-    if balance_dataset == True: # disable Balance of dataset
+    if balance_dataset == True:
         file_list['backgrounds'] = file_list['backgrounds'][
             0 : len(file_list['lesions'])]
     # Load in dicom images to RAM
