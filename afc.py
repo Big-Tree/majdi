@@ -45,28 +45,28 @@ def afc(all_lesions, normals, folds=1):
 
 
 
-    #lesions = {'0.95':{name:{class, soft},
-    #             '0.97':{name:{class, soft},
-    #             '0.99':{name:{class, soft}}
+    #lesions = {'0.91':{name:{class, soft},
+    #             '0.93':{name:{class, soft},
+    #             '0.95':{name:{class, soft}}
     # normals = {name}
     all_normals = np.array([normals[f]['soft'] for f in normals])
     all_normals = np.squeeze(all_normals)
     print('all_normals.shape: {}'.format(all_normals.shape))
-    num_correct = {'0.95': 0,
-                   '0.97': 0,
-                   '0.99': 0}
-    num_incorrect = {'0.95': 0,
-                   '0.97': 0,
-                   '0.99': 0}
+    num_correct = {'0.91': 0,
+                   '0.93': 0,
+                   '0.95': 0}
+    num_incorrect = {'0.91': 0,
+                   '0.93': 0,
+                   '0.95': 0}
     # Get local density and granularity of the lesion
     # File name example:
     #
-    #P_6CMBCM_L_7mm1005_SF_0.662_XYZ_442_203_1569_C_0.97_MD_22_RD_28_SDR_1_SDF
+    #P_6CMBCM_L_7mm1005_SF_0.662_XYZ_442_203_1569_C_0.93_MD_22_RD_28_SDR_1_SDF
     #       _ -phantom ID                                __ - +-5
     #_1_LO_1_XYZ_505_184_400
     #
     # Background example name:
-    # P_Tomo_6CMBCM_XYZ_985_204_292_XYD_973_221_MD_23_RD_28_SDR_1_SD_2_LD_2
+    # P_Tomo_6CMBCM_XYZ_985_204_292_XYD_933_221_MD_23_RD_28_SDR_1_SD_2_LD_2
 
     for contrast in all_lesions:
         for f in all_lesions[contrast]:
@@ -126,19 +126,19 @@ def old_afc(all_lesions, normals, folds=1):
     # what should be passed?
     # lesion and background softmax values
 
-    #lesions = {'0.95':{name:{class, soft},
-    #             '0.97':{name:{class, soft},
-    #             '0.99':{name:{class, soft}}
+    #lesions = {'0.91':{name:{class, soft},
+    #             '0.93':{name:{class, soft},
+    #             '0.95':{name:{class, soft}}
     # normals = {name}
     all_normals = np.array([normals[f]['soft'] for f in normals])
     all_normals = np.squeeze(all_normals)
     print('all_normals.shape: {}'.format(all_normals.shape))
-    num_correct = {'0.95': 0,
-                   '0.97': 0,
-                   '0.99': 0}
-    num_incorrect = {'0.95': 0,
-                   '0.97': 0,
-                   '0.99': 0}
+    num_correct = {'0.91': 0,
+                   '0.93': 0,
+                   '0.95': 0}
+    num_incorrect = {'0.91': 0,
+                   '0.93': 0,
+                   '0.95': 0}
     print('all_normals: {}'.format(all_normals))
     #
     for contrast in all_lesions:

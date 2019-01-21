@@ -28,7 +28,7 @@ def load_data_set(split_ratio, device, seed, i_split=0, balance_dataset=True):
             '/vol/research/mammo/mammo2/will/data/prem/Segments',
             '2D_dim2d.dcm'),
         'lesions': uf.get_files(
-            '/vol/research/mammo/mammo2/will/data/prem/2D/6mm',
+            '/vol/research/mammo/mammo2/will/data/prem/2D/4mm',
             '*.dcm')}
     # Balance the dataset
     # Shuffle the file list first so that we get a good spread of backgrounds
