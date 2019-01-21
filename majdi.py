@@ -32,20 +32,32 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 5
+    MAX_EPOCH = 50000
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
     BALANCE_DATASET = False
-    SAVE_PLOTS = False
-    SHOW_PLOTS = True
+    SAVE_PLOTS = True
+    SHOW_PLOTS = False
+
+    print('\nBATCH_SIZE: {}'.format(BATCH_SIZE),
+          '\nMAX_EPOCH: {}'.format(MAX_EPOCH),
+          '\nDEVICE: {}'.format(DEVICE),
+          '\nSEED: {}'.format(SEED),
+          '\nEARLY_STOPPING: {}'.format(EARLY_STOPPING),
+          '\nNUM_RUNS: {}'.format(NUM_RUNS),
+          '\nBALANCE_DATASET: {}'.format(BALANCE_DATASET),
+          '\nSAVE_PLOT: {}'.format(SAVE_PLOTS),
+          '\nSHOW_PLOTS: {}\n'.format(SHOW_PLOTS))
+
+
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
-    'majdi_unbalanced_6mm')
+    'majdi_unbalanced_6mm_newAFC')
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
