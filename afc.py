@@ -58,7 +58,6 @@ def afc(all_lesions, normals, folds=1):
     num_incorrect = {'0.95': 0,
                    '0.97': 0,
                    '0.99': 0}
-    print('all_normals: {}'.format(all_normals))
     # Get local density and granularity of the lesion
     # File name example:
     #
@@ -75,8 +74,25 @@ def afc(all_lesions, normals, folds=1):
             parse = f.split('_')
             ID = parse[1]
             MD = parse[13]
-            potential_normals = database[ID][MD]
-            print('potential_normals:\n{}'.format(potential_normals))
+            #potential_normals = database[ID][MD]
+            potential_normals = []
+            potential_normals.extend(
+                database[ID][MD])
+            MD_range = 1
+            while len(potential_normals) < 3:
+                print('len(potential_normals):{}'.format(
+                    len(potential_normals)))
+                try:
+                    potential_normals.extend(
+                        database[ID][str(int(MD)+MD_range)])
+                except:
+                    pass
+                try:
+                    potential_normals.extend(
+                        database[ID][str(int(MD)-MD_range)])
+                except:
+                    pass
+                MD_range += 1
             print('len(potential_normals): {}'.format(len(potential_normals)))
             print('ID: {}\nMD: {}'.format(ID, MD))
             # Select 3 normals randomly

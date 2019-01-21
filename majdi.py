@@ -32,14 +32,14 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 10000
+    MAX_EPOCH = 5
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
-    BALANCE_DATASET = True
-    SAVE_PLOTS = True
-    SHOW_PLOTS = False
+    BALANCE_DATASET = False
+    SAVE_PLOTS = False
+    SHOW_PLOTS = True
 
     now = datetime.datetime.now()
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
@@ -171,7 +171,6 @@ def main():
                 model, DEVICE, dataloaders[phase])
         roc_stats.append(copy.deepcopy(tmp_roc))
         stats.append(copy.deepcopy(tmp_stats))
-        print('stats:\n{}'.format(stats))
         # Only increment if network converged
         if MAX_EPOCH < 10:
             re_run_cutoff = 0
@@ -240,7 +239,7 @@ def main():
         tmp_acc = sum(tmp_lesion_class)/len(tmp_lesion_class)
         print('{} accuracy: {}'.format(key, tmp_acc))
 
-    old_afc(contrasts, normals)
+    afc(contrasts, normals)
 
 
 
