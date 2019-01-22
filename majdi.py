@@ -41,8 +41,8 @@ def main():
     CONTRASTS_STR = []
     NETWORK = 'vgg'
     EXPERIMENT_NAME = 'vgg_unbalanced_6mm_newAFC'
-    LESION_SIZE = '6mm'
-    SAVE_PLOTS = False
+    LESION_SIZE = '4mm'
+    SAVE_PLOTS = True
     SHOW_PLOTS = False
 
     if LESION_SIZE == '4mm':
