@@ -18,7 +18,8 @@ import usefulFunctions as uf
 # A split ratio of 0.8 will set 80% of the images for training, 10% for
 # validaiton and 10% for test
 # Class 0 - backgrounds... Class 1 - lesions
-def load_data_set(split_ratio, device, seed, i_split=0, balance_dataset=True):
+def load_data_set(split_ratio, device, seed, lesion_size,
+                  i_split=0, balance_dataset=True):
     # Initialise class variables:
     # Load in the dicom files
     # Get file list
@@ -28,13 +29,16 @@ def load_data_set(split_ratio, device, seed, i_split=0, balance_dataset=True):
             '/vol/research/mammo/mammo2/will/data/prem/Segments',
             '2D_dim2d.dcm'),
         'lesions': uf.get_files(
-            '/vol/research/mammo/mammo2/will/data/prem/2D/4mm',
+            '/vol/research/mammo/mammo2/will/data/prem/2D/' + lesion_size,
             '*.dcm')}
     # Balance the dataset
     # Shuffle the file list first so that we get a good spread of backgrounds
     if seed != None:
         random.seed(seed)
     random.shuffle(file_list['backgrounds'])
+    if seed != None:
+        random.seed(seed)
+    random.shuffle(file_list['lesions'])
     if balance_dataset == True:
         file_list['backgrounds'] = file_list['backgrounds'][
             0 : len(file_list['lesions'])]
@@ -83,6 +87,8 @@ def load_data_set(split_ratio, device, seed, i_split=0, balance_dataset=True):
     # Mix the lesions and backgrounds
     # [[img, label], [img, label]]
     # Note - dictionaries preserve insertion order
+    # Note! - the seed needs to be set to ensure that splits
+    # can be made at the correct point between runs
     dataset_mixer = []
     it = iter(rgb_images)
     print('class 0: {}'.format(next(it)))

@@ -32,14 +32,26 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 50000
+    MAX_EPOCH = 10000
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
     BALANCE_DATASET = False
+    CONTRASTS_STR = []
+    NETWORK = 'vgg'
+    EXPERIMENT_NAME = 'vgg_unbalanced_6mm_newAFC'
+    LESION_SIZE = '6mm'
     SAVE_PLOTS = True
     SHOW_PLOTS = False
+
+    if LESION_SIZE == '6mm':
+        CONTRASTS_STR = ['0.91', '0.95', '0.95']
+    elif LESION_SIZE == '4mm':
+        CONTRASTS_STR = ['0.95', '0.97', '0.99']
+
+
+
 
     print('\nBATCH_SIZE: {}'.format(BATCH_SIZE),
           '\nMAX_EPOCH: {}'.format(MAX_EPOCH),
@@ -48,6 +60,9 @@ def main():
           '\nEARLY_STOPPING: {}'.format(EARLY_STOPPING),
           '\nNUM_RUNS: {}'.format(NUM_RUNS),
           '\nBALANCE_DATASET: {}'.format(BALANCE_DATASET),
+          '\nLESION_SIZE: {}'.format(LESION_SIZE),
+          '\nCONTRASTS_STR: {}'.format(CONTRASTS_STR),
+          '\nNETWORK: {}'.format(NETWORK),
           '\nSAVE_PLOT: {}'.format(SAVE_PLOTS),
           '\nSHOW_PLOTS: {}\n'.format(SHOW_PLOTS))
 
@@ -57,7 +72,7 @@ def main():
     tmp = '/vol/research/mammo/mammo2/will/python/pyTorch/majdi/matplotlib/'
     #tmp = '/vol/vssp/cvpwrkspc01/scratch/wm0015/python_quota/matplotlib/'
     test_name = ('(' + str(NUM_RUNS) + ')_' +
-    'majdi_unbalanced_6mm_newAFC')
+    EXPERIMENT_NAME)
     #')_TL_aug_noTri_adam_0-1_fullClassifier_acc')
     #test_name = 'deleme'
     # Note - set SAVE_DIR to None to avoid saving of figures
@@ -65,7 +80,7 @@ def main():
                                           now.minute) + test_name
     #SAVE_DIR = None
 
-    datasets = load_data_set(0.8, DEVICE, SEED)
+    datasets = load_data_set(0.8, DEVICE, SEED, LESION_SIZE)
     print(test_name)
     print('len(datasets[train]): {}'.format(len(datasets['train'])))
     print('len(datasets[val]): {}'.format(len(datasets['val'])))
@@ -142,7 +157,8 @@ def main():
         # so whats going on
         # 
         # loader dataset for current run
-        datasets = load_data_set(0.8, DEVICE, SEED, i_split=run_num,
+        datasets = load_data_set(0.8, DEVICE, SEED, LESION_SIZE,
+                                 i_split=run_num,
                                  balance_dataset = BALANCE_DATASET) # latest 
         for key in dataloaders:                                      # latest
             dataloaders[key] = DataLoader(datasets[key],             # latest
@@ -151,8 +167,10 @@ def main():
                                           num_workers=4)             # latest
         # sample is to be an image to init the network size
         #sample = 
-        model = MajdiNet(sample, verbose=False)
-        #model = vgg19NetFullClassifier()
+        if NETWORK == 'majdi':
+            model = MajdiNet(sample, verbose=False)
+        elif NETWORK == 'vgg':
+            model = vgg19NetFullClassifier()
 
         #model = vgg19NetSingleLayer()
         model = model.to(DEVICE) # Enable GPU
@@ -218,15 +236,15 @@ def main():
     #different contrasts
     # Calculate the average accuracy and stuff for each contrast
     # create array of the different contrasts
-    contrasts = {'0.91':{},
-                 '0.93':{},
-                 '0.95':{}}
+    contrasts = {CONTRASTS_STR[0]:{},
+                 CONTRASTS_STR[1]:{},
+                 CONTRASTS_STR[2]:{}}
     normals = {}
     num_normals = 0
     num_lesions = 0
     for f in classifications:
         parse = f.split('_') # contrast held in element 11
-        if parse[11] == '0.91' or parse[11] == '0.93' or parse[11] == '0.95':
+        if parse[11] == CONTRASTS_STR[0] or parse[11] == CONTRASTS_STR[1] or parse[11] == CONTRASTS_STR[2]:
             #contrasts[parse[11]].append(classifications[f])
             contrasts[parse[11]][f] = classifications[f]
             num_lesions += 1
@@ -238,9 +256,9 @@ def main():
     print('len(normals): {}'.format(len(normals)))
     print('num_lesions: {}'.format(num_lesions))
     print('num_key_collisions: {}'.format(num_key_collisions))
-    print('num_0.91: {}'.format(len(contrasts['0.91'])))
-    print('num_0.93: {}'.format(len(contrasts['0.93'])))
-    print('num_0.95: {}'.format(len(contrasts['0.95'])))
+    print('num_0.91: {}'.format(len(contrasts[CONTRASTS_STR[0]])))
+    print('num_0.93: {}'.format(len(contrasts[CONTRASTS_STR[1]])))
+    print('num_0.95: {}'.format(len(contrasts[CONTRASTS_STR[2]])))
     print('len(tmp_classifications): {}'.format(len(tmp_classifications)))
     print('len(class_batch) :{}'.format(len(class_batch)))
     print('len(classifications): {}'.format(len(classifications)))

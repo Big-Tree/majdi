@@ -2,7 +2,7 @@ import random
 import numpy as np
 
 
-def afc(all_lesions, normals, folds=1):
+def afc(all_lesions, normals, contrasts, folds=1):
     print('Calculating 4afc...')
     # Shuffle
     # select 3 backgrouds, 1 lesion
@@ -45,19 +45,19 @@ def afc(all_lesions, normals, folds=1):
 
 
 
-    #lesions = {'0.91':{name:{class, soft},
-    #             '0.93':{name:{class, soft},
-    #             '0.95':{name:{class, soft}}
+    #lesions = {contrasts[0]:{name:{class, soft},
+    #             contrasts[1]:{name:{class, soft},
+    #             contrasts[2]:{name:{class, soft}}
     # normals = {name}
     all_normals = np.array([normals[f]['soft'] for f in normals])
     all_normals = np.squeeze(all_normals)
     print('all_normals.shape: {}'.format(all_normals.shape))
-    num_correct = {'0.91': 0,
-                   '0.93': 0,
-                   '0.95': 0}
-    num_incorrect = {'0.91': 0,
-                   '0.93': 0,
-                   '0.95': 0}
+    num_correct = {contrasts[0]: 0,
+                   contrasts[1]: 0,
+                   contrasts[2]: 0}
+    num_incorrect = {contrasts[0]: 0,
+                   contrasts[1]: 0,
+                   contrasts[2]: 0}
     # Get local density and granularity of the lesion
     # File name example:
     #
@@ -126,19 +126,19 @@ def old_afc(all_lesions, normals, folds=1):
     # what should be passed?
     # lesion and background softmax values
 
-    #lesions = {'0.91':{name:{class, soft},
-    #             '0.93':{name:{class, soft},
-    #             '0.95':{name:{class, soft}}
+    #lesions = {contrasts[0]:{name:{class, soft},
+    #             contrasts[1]:{name:{class, soft},
+    #             contrasts[2]:{name:{class, soft}}
     # normals = {name}
     all_normals = np.array([normals[f]['soft'] for f in normals])
     all_normals = np.squeeze(all_normals)
     print('all_normals.shape: {}'.format(all_normals.shape))
-    num_correct = {'0.91': 0,
-                   '0.93': 0,
-                   '0.95': 0}
-    num_incorrect = {'0.91': 0,
-                   '0.93': 0,
-                   '0.95': 0}
+    num_correct = {contrasts[0]: 0,
+                   contrasts[1]: 0,
+                   contrasts[2]: 0}
+    num_incorrect = {contrasts[0]: 0,
+                   contrasts[1]: 0,
+                   contrasts[2]: 0}
     print('all_normals: {}'.format(all_normals))
     #
     for contrast in all_lesions:
