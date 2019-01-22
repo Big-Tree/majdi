@@ -76,8 +76,11 @@ def afc(all_lesions, normals, contrasts, folds=1):
             MD = parse[13]
             #potential_normals = database[ID][MD]
             potential_normals = []
-            potential_normals.extend(
-                database[ID][MD])
+            try:
+                potential_normals.extend(
+                    database[ID][MD])
+            except:
+                pass
             MD_range = 1
             while len(potential_normals) < 3:
                 print('len(potential_normals):{}'.format(

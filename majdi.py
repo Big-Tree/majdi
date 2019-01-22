@@ -32,7 +32,7 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 10000
+    MAX_EPOCH = 1000
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 100
@@ -42,12 +42,12 @@ def main():
     NETWORK = 'vgg'
     EXPERIMENT_NAME = 'vgg_unbalanced_6mm_newAFC'
     LESION_SIZE = '6mm'
-    SAVE_PLOTS = True
+    SAVE_PLOTS = False
     SHOW_PLOTS = False
 
-    if LESION_SIZE == '6mm':
-        CONTRASTS_STR = ['0.91', '0.95', '0.95']
-    elif LESION_SIZE == '4mm':
+    if LESION_SIZE == '4mm':
+        CONTRASTS_STR = ['0.91', '0.93', '0.95']
+    elif LESION_SIZE == '6mm':
         CONTRASTS_STR = ['0.95', '0.97', '0.99']
 
 
@@ -269,7 +269,7 @@ def main():
         tmp_acc = sum(tmp_lesion_class)/len(tmp_lesion_class)
         print('{} accuracy: {}'.format(key, tmp_acc))
 
-    afc(contrasts, normals)
+    afc(contrasts, normals, CONTRASTS_STR)
 
 
 
