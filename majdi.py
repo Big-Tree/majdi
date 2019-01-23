@@ -31,7 +31,7 @@ def main():
     dtype = torch.float # not sure what this does
     #device = torch.device('cpu')
     # Globals:
-    BATCH_SIZE = 25
+    BATCH_SIZE = 100
     MAX_EPOCH = 50000
     DEVICE = torch.device('cuda')
     SEED = 7
@@ -40,7 +40,7 @@ def main():
     BALANCE_DATASET = False
     CONTRASTS_STR = []
     NETWORK = 'vgg'
-    EXPERIMENT_NAME = 'vgg_unbalanced_6mm_newAFC_rerun'
+    EXPERIMENT_NAME = 'vgg_unbalanced_6mm_newAFC_100Batch'
     LESION_SIZE = '6mm'
     SAVE_PLOTS = True
     SHOW_PLOTS = False
