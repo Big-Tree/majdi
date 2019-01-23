@@ -35,12 +35,6 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
             epoch < num_epochs):
         print('({})Epoch {}/{}'.format(run_num, epoch, num_epochs - 1))
         print('-' * 10)
-        print('best_model["train"]:{}\n\
-              best_model["val"]:{}\n\
-              best_model["test"]:{}'.format(
-                  best_model['train_acc'],
-                  best_model['val_acc'],
-                  best_model['test_acc']))
         start_epoch_time = time.time()
 
         # Each epoch has a training and validation phase
@@ -134,9 +128,9 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
                 if show_plots:
                     plt.pause(0.001)
 
-                last_last_epoch = dict(last_epoch)
-                last_epoch['acc'] = epoch_acc
-                last_epoch['loss'] = epoch_loss
+            last_last_epoch = dict(last_epoch)
+            last_epoch['acc'] = epoch_acc
+            last_epoch['loss'] = epoch_loss
 
         epoch += 1
         print('  Epoch time: {:.2f}s'.format(time.time()-start_epoch_time))
@@ -154,6 +148,7 @@ def train_model(model, criterion, optimizer, num_epochs, device, datasets,
     print('Best val Acc: {:4f}'.format(best_model['val_acc']))
     model.load_state_dict(best_model['model'])
     plt.close('all')
+    print('\n\n\n\nbestTest_acc:\n{}\n\n\n\n'.format(best_model['test_acc']))
     return (model,
             best_model['train_acc'],
             best_model['val_acc'],

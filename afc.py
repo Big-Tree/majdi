@@ -35,11 +35,11 @@ def afc(all_lesions, normals, contrasts, folds=1):
         else:
             database[ID][MD].append(normals[f]['soft'])
     # Print database stats
-    print('Printing database...\n')
-    for ID in database:
-        print('ID - {}'.format(ID))
-        for MD in database[ID]:
-            print('  MD_{} - {}'.format(MD, len(database[ID][MD])))
+    #print('Printing database...\n')
+    #for ID in database:
+    #    print('ID - {}'.format(ID))
+    #    for MD in database[ID]:
+    #        print('  MD_{} - {}'.format(MD, len(database[ID][MD])))
 
 
 
@@ -51,7 +51,6 @@ def afc(all_lesions, normals, contrasts, folds=1):
     # normals = {name}
     all_normals = np.array([normals[f]['soft'] for f in normals])
     all_normals = np.squeeze(all_normals)
-    print('all_normals.shape: {}'.format(all_normals.shape))
     num_correct = {contrasts[0]: 0,
                    contrasts[1]: 0,
                    contrasts[2]: 0}
@@ -83,8 +82,6 @@ def afc(all_lesions, normals, contrasts, folds=1):
                 pass
             MD_range = 1
             while len(potential_normals) < 3:
-                print('len(potential_normals):{}'.format(
-                    len(potential_normals)))
                 try:
                     potential_normals.extend(
                         database[ID][str(int(MD)+MD_range)])
@@ -96,22 +93,15 @@ def afc(all_lesions, normals, contrasts, folds=1):
                 except:
                     pass
                 MD_range += 1
-            print('len(potential_normals): {}'.format(len(potential_normals)))
-            print('ID: {}\nMD: {}'.format(ID, MD))
             # Select 3 normals randomly
             random_indexes = random.sample(range(len(potential_normals)), 3)
             normal = [potential_normals[random_indexes[0]][1],
                       potential_normals[random_indexes[1]][1],
                       potential_normals[random_indexes[2]][1]]
-            print('normal: {}'.format(normal))
-            print('lesion: {}'.format(lesion))
             if max(lesion, max(normal)) == lesion:
                 num_correct[contrast] += 1
             else:
                 num_incorrect[contrast] += 1
-    print('len(all_normals): {}'.format(len(all_normals)))
-    print('num_correct:\n{}'.format(num_correct))
-    print('num_incorrect:\n{}'.format(num_incorrect))
 
     for contrast in num_correct:
         print('{}: {:.2f}%'.format(

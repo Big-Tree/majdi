@@ -32,7 +32,7 @@ def main():
     #device = torch.device('cpu')
     # Globals:
     BATCH_SIZE = 25
-    MAX_EPOCH = 1000
+    MAX_EPOCH = 50000
     DEVICE = torch.device('cuda')
     SEED = 7
     EARLY_STOPPING = 100
@@ -40,8 +40,8 @@ def main():
     BALANCE_DATASET = False
     CONTRASTS_STR = []
     NETWORK = 'vgg'
-    EXPERIMENT_NAME = 'vgg_unbalanced_6mm_newAFC'
-    LESION_SIZE = '4mm'
+    EXPERIMENT_NAME = 'vgg_unbalanced_6mm_newAFC_rerun'
+    LESION_SIZE = '6mm'
     SAVE_PLOTS = True
     SHOW_PLOTS = False
 
@@ -316,6 +316,7 @@ def main():
    # plt.legend()
 
     # Display and save stats for runs
+    print('stats:\n{}'.format(stats))
     save_results(SAVE_DIR, stats, NUM_RUNS)
 
     running_time = time.time() - start_time
