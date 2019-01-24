@@ -40,8 +40,8 @@ def main():
     BALANCE_DATASET = False
     CONTRASTS_STR = []
     NETWORK = 'vgg_fine_tune'
-    FINETUNE_LAYER = 12
-    EXPERIMENT_NAME = 'vgg_unbalanced_4mm_fineTune_' + FINETUNE_LAYER
+    FINETUNE_LAYER = 17
+    EXPERIMENT_NAME = 'vgg_unbalanced_4mm_fineTune_' + str(FINETUNE_LAYER)
     LESION_SIZE = '4mm'
     SAVE_PLOTS = True
     SHOW_PLOTS = False
