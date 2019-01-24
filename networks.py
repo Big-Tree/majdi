@@ -42,6 +42,43 @@ def vgg19NetFullClassifier():
 
     return model
 
+def vgg19NetFullClassifier_fine_tune(layer):
+    model = models.vgg19(pretrained=True)
+
+    # add conv so that images with a single channel will work
+    first_conv_layer = [nn.Conv2d(1, 3, kernel_size=3, stride=1, padding=1,
+                                  dilation=1, groups=1, bias=True)]
+    first_conv_layer.extend(list(model.features))
+    model.features= nn.Sequential(*first_conv_layer )
+
+    # Freeze model
+    print('model.features: {}'.format(model.features))
+    count = 0
+    param_it = model.features.parameters()
+    for i in range(layer*2): # 17 layers in feature extractor
+        next(param_it).requires_grad = False
+
+    #for name, param in model.features.named_parameters():
+    #    param.requires_grad = False
+    #    print('name: {}'.format(name))
+    #    count += 1
+    #print('len(model.features.parameters()): {}'.format(
+    #    count))
+
+    # Newly created modules have require_grad=True by default
+    #num_features = 86528 # with triangles
+    num_features = 41472 # without triangles
+
+    model.classifier = nn.Sequential(*[nn.Linear(num_features, 4096),
+                                       nn.ReLU(),
+                                       nn.Linear(4096, 4096),
+                                       nn.ReLU(),
+                                       nn.Linear(4096, 2),
+                                      nn.Softmax(dim=1)])
+    print(model)
+
+    return model
+
 
 def vgg19NetSingleLayer():
     model = models.vgg19(pretrained=True)

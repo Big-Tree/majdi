@@ -31,7 +31,7 @@ def main():
     dtype = torch.float # not sure what this does
     #device = torch.device('cpu')
     # Globals:
-    BATCH_SIZE = 100
+    BATCH_SIZE = 25
     MAX_EPOCH = 50000
     DEVICE = torch.device('cuda')
     SEED = 7
@@ -39,9 +39,10 @@ def main():
     NUM_RUNS = 10
     BALANCE_DATASET = False
     CONTRASTS_STR = []
-    NETWORK = 'vgg'
-    EXPERIMENT_NAME = 'vgg_unbalanced_6mm_newAFC_100Batch'
-    LESION_SIZE = '6mm'
+    NETWORK = 'vgg_fine_tune'
+    FINETUNE_LAYER = 12
+    EXPERIMENT_NAME = 'vgg_unbalanced_4mm_fineTune_' + FINETUNE_LAYER
+    LESION_SIZE = '4mm'
     SAVE_PLOTS = True
     SHOW_PLOTS = False
 
@@ -171,6 +172,9 @@ def main():
             model = MajdiNet(sample, verbose=False)
         elif NETWORK == 'vgg':
             model = vgg19NetFullClassifier()
+        elif NETWORK == 'vgg_fine_tune':
+            model = vgg19NetFullClassifier_fine_tune(FINETUNE_LAYER)
+
 
         #model = vgg19NetSingleLayer()
         model = model.to(DEVICE) # Enable GPU
