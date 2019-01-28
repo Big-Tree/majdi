@@ -43,8 +43,8 @@ def main():
     FINETUNE_LAYER = 16 #17 - vgg no fine tuning
     EXPERIMENT_NAME = 'vgg_unbalanced_4mm_fineTune_' + str(FINETUNE_LAYER)
     LESION_SIZE = '4mm'
-    SAVE_PLOTS = False
-    SHOW_PLOTS = True
+    SAVE_PLOTS = True
+    SHOW_PLOTS = False
 
     if LESION_SIZE == '4mm':
         CONTRASTS_STR = ['0.91', '0.93', '0.95']
