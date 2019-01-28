@@ -40,16 +40,25 @@ def main():
     BALANCE_DATASET = False
     CONTRASTS_STR = []
     NETWORK = 'vgg_fine_tune'
-    FINETUNE_LAYER = 17
+    FINETUNE_LAYER = 16 #17 - vgg no fine tuning
     EXPERIMENT_NAME = 'vgg_unbalanced_4mm_fineTune_' + str(FINETUNE_LAYER)
     LESION_SIZE = '4mm'
-    SAVE_PLOTS = True
-    SHOW_PLOTS = False
+    SAVE_PLOTS = False
+    SHOW_PLOTS = True
 
     if LESION_SIZE == '4mm':
         CONTRASTS_STR = ['0.91', '0.93', '0.95']
     elif LESION_SIZE == '6mm':
         CONTRASTS_STR = ['0.95', '0.97', '0.99']
+
+    # Load in command line arguments
+    args = np.asarray(sys.argv)
+    # FINETUNE_LAYER
+    if sum(args == '--finetune_layer'):
+        arg_position = np.where(args=='--finetune_layer')[0][0]
+        FINETUNE_LAYER = args[arg_position+1]
+
+
 
 
 
@@ -64,6 +73,7 @@ def main():
           '\nLESION_SIZE: {}'.format(LESION_SIZE),
           '\nCONTRASTS_STR: {}'.format(CONTRASTS_STR),
           '\nNETWORK: {}'.format(NETWORK),
+          '\nFINETUNE_LAYER: {}'.format(FINETUNE_LAYER),
           '\nSAVE_PLOT: {}'.format(SAVE_PLOTS),
           '\nSHOW_PLOTS: {}\n'.format(SHOW_PLOTS))
 

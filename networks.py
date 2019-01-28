@@ -54,9 +54,20 @@ def vgg19NetFullClassifier_fine_tune(layer):
     # Freeze model
     print('model.features: {}'.format(model.features))
     count = 0
-    param_it = model.features.parameters()
-    for i in range(layer*2): # 17 layers in feature extractor
-        next(param_it).requires_grad = False
+    param_list = list(model.features.parameters())
+    for param in model.features.parameters():
+        param.requires_grad = False
+
+    # Loop backwards through parameters
+    print('len(param_list): {}'.format(len(param_list)))
+    for i in range(len(param_list)-1, len(param_list)-layer*2-1, -1):
+        print('i: {}'.format(i))
+        param_list[i].requires_grad = True
+
+    # Print out parameter stats
+    for index, param in enumerate(model.features.parameters()):
+        print('Param: {}    requires_grad: {}'.format(
+            index, param.requires_grad))
 
     #for name, param in model.features.named_parameters():
     #    param.requires_grad = False
