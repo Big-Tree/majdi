@@ -33,7 +33,7 @@ def main():
     # Globals:
     BATCH_SIZE = 25
     MAX_EPOCH = 50000
-    DEVICE = torch.device('cuda')
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     SEED = 7
     EARLY_STOPPING = 100
     NUM_RUNS = 10
@@ -56,7 +56,8 @@ def main():
     # FINETUNE_LAYER
     if sum(args == '--finetune_layer'):
         arg_position = np.where(args=='--finetune_layer')[0][0]
-        FINETUNE_LAYER = args[arg_position+1]
+        FINETUNE_LAYER = int(args[arg_position+1])
+        print('type(FINETUNE_LAYER): {}'.format(type(FINETUNE_LAYER)))
 
 
 
