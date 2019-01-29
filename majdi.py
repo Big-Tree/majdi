@@ -21,6 +21,9 @@ from rocCurve import *
 from networks import *
 from classify import *
 from afc import *
+import sys
+sys.path.append('/vol/research/mammo/mammo2/will/python/usefulFunctions')
+from usefulFunctions import *
 
 
 
@@ -40,7 +43,7 @@ def main():
     BALANCE_DATASET = False
     CONTRASTS_STR = []
     NETWORK = 'vgg_fine_tune'
-    FINETUNE_LAYER = 16 #17 - vgg no fine tuning
+    FINETUNE_LAYER = 17 #17 - vgg no fine tuning
     EXPERIMENT_NAME = 'vgg_unbalanced_4mm_fineTune_' + str(FINETUNE_LAYER)
     LESION_SIZE = '4mm'
     SAVE_PLOTS = True
@@ -53,18 +56,34 @@ def main():
 
     # Load in command line arguments
     args = np.asarray(sys.argv)
+    if is_arg_present(args, '--finetune_layer'):
+        FINETUNE_LAYER = get_arg(args, '--finetune_layer')
+    if is_arg_present(args, '--balance_dataset'):
+        BALANCE_DATASET = get_arg(args, '--balance_dataset')
+    if is_arg_present(args, '--network'):
+        NETWORK = get_arg(args, '--network')
+
+    EXPERIMENT_NAME = str(NETWORK) + '_balance-' + str(BALANCE_DATASET) + '_4mm'
     # FINETUNE_LAYER
-    if sum(args == '--finetune_layer'):
-        arg_position = np.where(args=='--finetune_layer')[0][0]
-        FINETUNE_LAYER = int(args[arg_position+1])
-        print('type(FINETUNE_LAYER): {}'.format(type(FINETUNE_LAYER)))
+    #if sum(args == '--finetune_layer'):
+    #    arg_position = np.where(args=='--finetune_layer')[0][0]
+    #    FINETUNE_LAYER = int(args[arg_position+1])
+    #    print('type(FINETUNE_LAYER): {}'.format(type(FINETUNE_LAYER)))
+    #if sum(args == '--balance_dataset'):
+    #    arg_position = np.where(args=='--balance_dataset')[0][0]
+    #    FINETUNE_LAYER = int(args[arg_position+1])
+    #    print('type(FINETUNE_LAYER): {}'.format(type(FINETUNE_LAYER)))
 
 
 
 
 
 
-    print('\nBATCH_SIZE: {}'.format(BATCH_SIZE),
+
+
+
+    print('\nEXPERIMENT_NAME: {}'.format(EXPERIMENT_NAME),
+          '\nBATCH_SIZE: {}'.format(BATCH_SIZE),
           '\nMAX_EPOCH: {}'.format(MAX_EPOCH),
           '\nDEVICE: {}'.format(DEVICE),
           '\nSEED: {}'.format(SEED),
