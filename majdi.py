@@ -65,7 +65,7 @@ def main():
     if is_arg_present(args, '--lesion_size'):
         LESION_SIZE = get_arg(args, '--lesion_size')
 
-    EXPERIMENT_NAME = str(NETWORK) + '_balance-' + str(BALANCE_DATASET) + \
+    EXPERIMENT_NAME = str(NETWORK) + \
         '_' + str(LESION_SIZE)
     # FINETUNE_LAYER
     #if sum(args == '--finetune_layer'):
