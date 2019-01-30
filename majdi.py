@@ -62,8 +62,11 @@ def main():
         BALANCE_DATASET = get_arg(args, '--balance_dataset')
     if is_arg_present(args, '--network'):
         NETWORK = get_arg(args, '--network')
+    if is_arg_present(args, '--lesion_size'):
+        LESION_SIZE = get_arg(args, '--lesion_size')
 
-    EXPERIMENT_NAME = str(NETWORK) + '_balance-' + str(BALANCE_DATASET) + '_4mm'
+    EXPERIMENT_NAME = str(NETWORK) + '_balance-' + str(BALANCE_DATASET) + \
+        '_' + str(LESION_SIZE)
     # FINETUNE_LAYER
     #if sum(args == '--finetune_layer'):
     #    arg_position = np.where(args=='--finetune_layer')[0][0]
