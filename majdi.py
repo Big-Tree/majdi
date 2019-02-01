@@ -49,10 +49,6 @@ def main():
     SAVE_PLOTS = True
     SHOW_PLOTS = False
 
-    if LESION_SIZE == '4mm':
-        CONTRASTS_STR = ['0.91', '0.93', '0.95']
-    elif LESION_SIZE == '6mm':
-        CONTRASTS_STR = ['0.95', '0.97', '0.99']
 
     # Load in command line arguments
     args = np.asarray(sys.argv)
@@ -64,6 +60,11 @@ def main():
         NETWORK = get_arg(args, '--network')
     if is_arg_present(args, '--lesion_size'):
         LESION_SIZE = get_arg(args, '--lesion_size')
+
+    if LESION_SIZE == '4mm':
+        CONTRASTS_STR = ['0.91', '0.93', '0.95']
+    elif LESION_SIZE == '6mm':
+        CONTRASTS_STR = ['0.95', '0.97', '0.99']
 
     EXPERIMENT_NAME = str(NETWORK) + \
         '_' + str(LESION_SIZE)
